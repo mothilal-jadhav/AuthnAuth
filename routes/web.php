@@ -15,7 +15,8 @@ Route::get('/', function () {
 
 Route::get('/register', [RegisterController::class, 'showRegistrationForm']);
 
-Route::post('/register', [RegisterController::class, 'register']);
+Route::post('/register', [RegisterController::class, 'register'])
+    ->name('register.store');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
@@ -31,10 +32,10 @@ Route::post('/logout', function () {
 })->middleware('auth');
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])
-    ->middleware('guest');
+    ->name('login');
 
 Route::post('/login', [LoginController::class, 'login'])
-    ->middleware('guest');
+    ->name('login.submit');
 
 Route::get('/admin', [AdminController::class, 'index'])
     ->middleware(['auth', 'role:admin']);

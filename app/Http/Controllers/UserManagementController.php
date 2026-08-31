@@ -35,6 +35,7 @@ class UserManagementController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => $temporaryPassword,
+            'role_id' => $validated['role_id'],
         ]);
 
         $user->role()->associate($validated['role_id']);
