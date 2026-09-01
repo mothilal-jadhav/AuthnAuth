@@ -10,7 +10,9 @@
 
         <div class="brand">
             <span class="brand-name">AuthnAuth</span>
-            <span class="brand-subtitle">Authentication & Authorization</span>
+            <span class="brand-subtitle">
+                Authentication & Authorization
+            </span>
         </div>
 
         <div class="nav-user">
@@ -38,7 +40,10 @@
         <section class="welcome-section">
 
             <div>
-                <p class="eyebrow">Dashboard</p>
+
+                <p class="eyebrow">
+                    Dashboard
+                </p>
 
                 <h1>
                     Welcome, {{ auth()->user()->name }}
@@ -47,6 +52,7 @@
                 <p class="welcome-text">
                     Manage your account and access available resources.
                 </p>
+
             </div>
 
             <div class="role-badge">
@@ -59,23 +65,53 @@
         <section class="stats-grid">
 
             <div class="stat-card">
-                <span class="stat-label">Account</span>
-                <strong>Active</strong>
-                <small>Authenticated user</small>
+
+                <span class="stat-label">
+                    Account
+                </span>
+
+                <strong>
+                    Active
+                </strong>
+
+                <small>
+                    Authenticated user
+                </small>
+
             </div>
 
-            <div class="stat-card">
-                <span class="stat-label">Role</span>
-                <strong>{{ ucfirst(auth()->user()->role->name) }}</strong>
-                <small>Assigned access level</small>
-            </div>
 
             <div class="stat-card">
-                <span class="stat-label">Access</span>
+
+                <span class="stat-label">
+                    Role
+                </span>
+
+                <strong>
+                    {{ ucfirst(auth()->user()->role->name) }}
+                </strong>
+
+                <small>
+                    Assigned access level
+                </small>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <span class="stat-label">
+                    Access
+                </span>
+
                 <strong>
                     {{ auth()->user()->role->permissions->count() }}
                 </strong>
-                <small>Available actions</small>
+
+                <small>
+                    Available actions
+                </small>
+
             </div>
 
         </section>
@@ -84,36 +120,48 @@
         <section class="dashboard-card">
 
             <div class="card-header">
+
                 <div>
-                    <h2>Available Actions</h2>
+
+                    <h2>
+                        Available Actions
+                    </h2>
 
                     <p>
-                        Actions available to your account based on your role.
+                        Actions available to your account.
                     </p>
+
                 </div>
+
             </div>
 
 
             <div class="action-grid">
 
+
+                {{-- View Users --}}
+
                 @if (auth()->user()->hasPermission('users.view'))
 
-                    <a href="{{ url('/users') }}" class="action-card">
+                    <a
+                        href="{{ route('users.index') }}"
+                        class="action-card"
+                    >
 
                         <div class="action-icon">
                             U
                         </div>
 
                         <div>
-                            <h3>View Users</h3>
+
+                            <h3>
+                                View Users
+                            </h3>
 
                             <p>
-                                View users you are authorized to access.
+                                View and manage authorized users.
                             </p>
 
-                            <span class="permission-label">
-                                users.view
-                            </span>
                         </div>
 
                     </a>
@@ -121,24 +169,29 @@
                 @endif
 
 
+                {{-- Create User --}}
+
                 @if (auth()->user()->hasPermission('users.create'))
 
-                    <a href="{{ url('/users/create') }}" class="action-card">
+                    <a
+                        href="{{ route('users.create') }}"
+                        class="action-card"
+                    >
 
                         <div class="action-icon">
                             +
                         </div>
 
                         <div>
-                            <h3>Create User</h3>
+
+                            <h3>
+                                Create User
+                            </h3>
 
                             <p>
                                 Create a new user account.
                             </p>
 
-                            <span class="permission-label">
-                                users.create
-                            </span>
                         </div>
 
                     </a>
@@ -146,79 +199,35 @@
                 @endif
 
 
-                @if (auth()->user()->hasPermission('users.update'))
-
-                    <a href="#" class="action-card">
-
-                        <div class="action-icon">
-                            E
-                        </div>
-
-                        <div>
-                            <h3>Update Users</h3>
-
-                            <p>
-                                Modify user information.
-                            </p>
-
-                            <span class="permission-label">
-                                users.update
-                            </span>
-                        </div>
-
-                    </a>
-
-                @endif
-
-
-                @if (auth()->user()->hasPermission('users.delete'))
-
-                    <a href="#" class="action-card">
-
-                        <div class="action-icon">
-                            D
-                        </div>
-
-                        <div>
-                            <h3>Delete Users</h3>
-
-                            <p>
-                                Remove authorized user accounts.
-                            </p>
-
-                            <span class="permission-label">
-                                users.delete
-                            </span>
-                        </div>
-
-                    </a>
-
-                @endif
-
+                {{-- My Profile --}}
 
                 @if (auth()->user()->hasPermission('profile.view'))
 
-                    <a href="#" class="action-card">
+                    <a
+                        href="#"
+                        class="action-card"
+                    >
 
                         <div class="action-icon">
                             P
                         </div>
 
                         <div>
-                            <h3>My Profile</h3>
+
+                            <h3>
+                                My Profile
+                            </h3>
 
                             <p>
                                 View your account information.
                             </p>
 
-                            <span class="permission-label">
-                                profile.view
-                            </span>
                         </div>
 
                     </a>
 
                 @endif
+
 
             </div>
 

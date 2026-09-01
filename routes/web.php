@@ -67,3 +67,15 @@ Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showRese
 Route::post('/reset-password', [ResetPasswordController::class, 'reset'])
     ->middleware('guest')
     ->name('password.update');
+
+Route::get('/users/{user}/edit', [UserManagementController::class, 'edit'])
+->middleware(['auth', 'permission:users.update'])
+->name('users.edit');
+
+Route::put('/users/{user}', [UserManagementController::class, 'update'])
+    ->middleware(['auth', 'permission:users.update'])
+    ->name('users.update');
+
+Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])
+    ->middleware(['auth', 'permission:users.delete'])
+    ->name('users.destroy');

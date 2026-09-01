@@ -777,3 +777,130 @@ body {
     }
 
 }
+
+.users-card {
+    width: 100%;
+
+    background: #ffffff;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+
+    overflow: hidden;
+}
+
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.users-table th {
+    padding: 15px 18px;
+
+    background: #f9fafb;
+
+    border-bottom: 1px solid #e5e7eb;
+
+    color: #6b7280;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    text-align: left;
+    text-transform: uppercase;
+}
+
+.users-table td {
+    padding: 16px 18px;
+
+    border-bottom: 1px solid #f3f4f6;
+
+    color: #374151;
+
+    font-size: 13px;
+}
+
+.users-table tr:last-child td {
+    border-bottom: none;
+}
+
+.role-badge {
+    display: inline-block;
+
+    padding: 5px 9px;
+
+    background: #f3f4f6;
+
+    border-radius: 5px;
+
+    color: #374151;
+
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.user-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-actions form {
+    margin: 0;
+}
+
+.action-edit {
+    color: #2563eb;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    text-decoration: none;
+}
+
+.action-delete {
+    padding: 0;
+
+    border: none;
+
+    background: transparent;
+
+    color: #dc2626;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.action-edit:hover,
+.action-delete:hover {
+    text-decoration: underline;
+}
+
+.empty-users {
+    padding: 40px !important;
+
+    color: #9ca3af !important;
+
+    text-align: center;
+}
+
+.success-message {
+    margin-bottom: 20px;
+    padding: 13px 16px;
+
+    background: #ecfdf5;
+
+    border: 1px solid #a7f3d0;
+    border-radius: 7px;
+
+    color: #065f46;
+
+    font-size: 13px;
+}
