@@ -20,7 +20,7 @@ Route::post('/register', [RegisterController::class, 'register'])
 
 Route::get('/dashboard', function () {
     return view('dashboard');
-})->middleware('auth');
+})->middleware('auth')->name('dashboard');
 
 Route::post('/logout', function () {
     Auth::logout();
@@ -40,17 +40,6 @@ Route::post('/login', [LoginController::class, 'login'])
 Route::get('/admin', [AdminController::class, 'index'])
     ->middleware(['auth', 'role:admin']);
 
-Route::get('/users', [UserManagementController::class, 'index'])
-    ->middleware(['auth', 'permission:users.view'])
-    ->name('users.index');
-
-Route::get('/users/create', [UserManagementController::class, 'create'])
-    ->middleware(['auth', 'permission:users.create'])
-    ->name('users.create');
-
-Route::post('/users', [UserManagementController::class, 'store'])
-    ->middleware(['auth', 'permission:users.create'])
-    ->name('users.store');
 
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])
     ->middleware('guest')
@@ -68,9 +57,21 @@ Route::post('/reset-password', [ResetPasswordController::class, 'reset'])
     ->middleware('guest')
     ->name('password.update');
 
+Route::get('/users', [UserManagementController::class, 'index'])
+    ->middleware(['auth', 'permission:users.view'])
+    ->name('users.index');
+
+Route::get('/users/create', [UserManagementController::class, 'create'])
+    ->middleware(['auth', 'permission:users.create'])
+    ->name('users.create');
+
+Route::post('/users', [UserManagementController::class, 'store'])
+    ->middleware(['auth', 'permission:users.create'])
+    ->name('users.store');
+
 Route::get('/users/{user}/edit', [UserManagementController::class, 'edit'])
-->middleware(['auth', 'permission:users.update'])
-->name('users.edit');
+    ->middleware(['auth', 'permission:users.update'])
+    ->name('users.edit');
 
 Route::put('/users/{user}', [UserManagementController::class, 'update'])
     ->middleware(['auth', 'permission:users.update'])

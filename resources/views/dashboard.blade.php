@@ -141,27 +141,20 @@
 
                 {{-- View Users --}}
 
-                @if (auth()->user()->hasPermission('users.view'))
+                @if(auth()->user()->hasPermission('users.view'))
 
-                    <a
-                        href="{{ route('users.index') }}"
-                        class="action-card"
-                    >
+                    <a href="{{ route('users.index') }}" class="action-card">
 
                         <div class="action-icon">
                             U
                         </div>
 
                         <div>
-
-                            <h3>
-                                View Users
-                            </h3>
+                            <h3>View Users</h3>
 
                             <p>
-                                View and manage authorized users.
+                                View users you are authorized to access.
                             </p>
-
                         </div>
 
                     </a>
@@ -169,34 +162,26 @@
                 @endif
 
 
-                {{-- Create User --}}
+                @if(auth()->user()->hasPermission('users.create'))
 
-                @if (auth()->user()->hasPermission('users.create'))
-
-                    <a
-                        href="{{ route('users.create') }}"
-                        class="action-card"
-                    >
+                    <a href="{{ route('users.create') }}" class="action-card">
 
                         <div class="action-icon">
                             +
                         </div>
 
                         <div>
-
-                            <h3>
-                                Create User
-                            </h3>
+                            <h3>Create User</h3>
 
                             <p>
                                 Create a new user account.
                             </p>
-
                         </div>
 
                     </a>
 
                 @endif
+
 
 
                 {{-- My Profile --}}
@@ -204,7 +189,7 @@
                 @if (auth()->user()->hasPermission('profile.view'))
 
                     <a
-                        href="#"
+                        href="{{ url('/profile') }}"
                         class="action-card"
                     >
 

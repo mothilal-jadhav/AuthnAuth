@@ -16,7 +16,23 @@ class UserManagementController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('users.index', compact('users'));
+        $admins = $users->filter(
+            fn ($user) => $user->role?->name === 'admin'
+        );
+
+        $managers = $users->filter(
+            fn ($user) => $user->role?->name === 'manager'
+        );
+
+        $normalUsers = $users->filter(
+            fn ($user) => $user->role?->name === 'user'
+        );
+
+        return view('users.index', compact(
+            'admins',
+            'managers',
+            'normalUsers'
+        ));
     }
 
     public function create()
@@ -56,8 +72,31 @@ class UserManagementController extends Controller
             ]);
     }
 
+    private function canManageUser(User $target): bool
+    {
+        $currentUser = auth()->user();
+
+        // Admin can manage everyone.
+        if ($currentUser->role->name === 'admin') {
+            return true;
+        }
+
+        // Manager can manage only normal users.
+        if (
+            $currentUser->role->name === 'manager' &&
+            $target->role?->name === 'user'
+        ) {
+            return true;
+        }
+
+        // Normal users cannot manage anyone.
+        return false;
+    }
+
     public function edit(User $user)
     {
+        abort_unless($this->canManageUser($user), 403);
+
         $roles = Role::orderBy('name')->get();
 
         return view('users.edit', compact('user', 'roles'));
@@ -65,6 +104,8 @@ class UserManagementController extends Controller
 
     public function update(Request $request, User $user)
     {
+        abort_unless($this->canManageUser($user), 403);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => [
@@ -75,6 +116,14 @@ class UserManagementController extends Controller
             ],
             'role_id' => ['required', 'exists:roles,id'],
         ]);
+
+        // Manager cannot promote a normal user to manager/admin.
+        if (
+            auth()->user()->role->name === 'manager' &&
+            Role::find($validated['role_id'])->name !== 'user'
+        ) {
+            abort(403);
+        }
 
         $user->update([
             'name' => $validated['name'],
@@ -89,6 +138,8 @@ class UserManagementController extends Controller
 
     public function destroy(User $user)
     {
+        abort_unless($this->canManageUser($user), 403);
+
         $user->delete();
 
         return redirect()
