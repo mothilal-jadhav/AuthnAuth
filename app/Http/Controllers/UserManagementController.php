@@ -45,8 +45,14 @@ class UserManagementController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'name' => ['required', 'string', 'regex:/^[a-zA-Z\s]+$/', 'max:255'],
+            'email' => [
+                'required', 
+                'email', 
+                'max:255', 
+                'unique:users,email',
+                'regex:/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/',
+            ],
             'role_id' => ['required', 'exists:roles,id'],
         ]);
 
@@ -59,7 +65,6 @@ class UserManagementController extends Controller
             'role_id' => $validated['role_id'],
         ]);
 
-        $user->role()->associate($validated['role_id']);
         $user->save();
 
         return redirect()
@@ -107,14 +112,18 @@ class UserManagementController extends Controller
         abort_unless($this->canManageUser($user), 403);
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'regex:/^[a-zA-Z\s]+$/', 'max:255'],
             'email' => [
-                'required',
-                'email',
-                'max:255',
+                'required', 
+                'email', 
+                'max:255', 
+                'regex:/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/',
                 Rule::unique('users', 'email')->ignore($user->id),
             ],
-            'role_id' => ['required', 'exists:roles,id'],
+            'role_id' => [
+                'required',
+                'exists:roles,id',
+            ],
         ]);
 
         // Manager cannot promote a normal user to manager/admin.
