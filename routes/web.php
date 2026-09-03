@@ -80,3 +80,7 @@ Route::put('/users/{user}', [UserManagementController::class, 'update'])
 Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])
     ->middleware(['auth', 'permission:users.delete'])
     ->name('users.destroy');
+
+Route::get('/profile', function () {
+    return view('profile');
+})->middleware('auth')->name('profile');

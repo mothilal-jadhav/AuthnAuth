@@ -189,8 +189,7 @@
                 @if (auth()->user()->hasPermission('profile.view'))
 
                     <a
-                        href="{{ url('/profile') }}"
-                        class="action-card"
+                        href="{{ route('profile') }}" class="action-card"
                     >
 
                         <div class="action-icon">
