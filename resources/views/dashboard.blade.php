@@ -8,14 +8,18 @@
 
     <nav class="navbar">
 
-        <div class="brand">
+        <a href="{{ route('dashboard') }}" class="brand">
             <span class="brand-name">AuthnAuth</span>
             <span class="brand-subtitle">
                 Authentication & Authorization
             </span>
-        </div>
+        </a>
 
         <div class="nav-user">
+
+            <div class="nav-avatar">
+                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+            </div>
 
             <div class="user-info">
                 <strong>{{ auth()->user()->name }}</strong>
@@ -146,7 +150,7 @@
                     <a href="{{ route('users.index') }}" class="action-card">
 
                         <div class="action-icon">
-                            U
+                            👁
                         </div>
 
                         <div>
@@ -192,8 +196,8 @@
                         href="{{ route('profile') }}" class="action-card"
                     >
 
-                        <div class="action-icon">
-                            P
+                        <div class="nav-avatar">
+                            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
                         </div>
 
                         <div>
