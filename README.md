@@ -1,58 +1,180 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# AuthnAuth
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A server-rendered authentication and role-based access control (RBAC) system built on Laravel. AuthnAuth handles user registration, login, password resets, forced first-login password changes, and a full admin user-management workflow with an ordinal role hierarchy — all with no external auth package (no Breeze, Jetstream, Fortify, or Sanctum).
 
-## About Laravel
+[![CI](https://github.com/mothilal-jadhav/AuthnAuth/actions/workflows/ci.yml/badge.svg)](https://github.com/mothilal-jadhav/AuthnAuth/actions/workflows/ci.yml)
+![PHP](https://img.shields.io/badge/PHP-%5E8.3-777bb4)
+![Laravel](https://img.shields.io/badge/Laravel-%5E13.17-ff2d20)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Table of Contents
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Access Control Model](#access-control-model)
+- [Requirements](#requirements)
+- [Getting Started](#getting-started)
+- [Provisioning an Admin Account](#provisioning-an-admin-account)
+- [Running the App](#running-the-app)
+- [Testing & Code Quality](#testing--code-quality)
+- [Project Structure](#project-structure)
+- [Routes](#routes)
+- [Configuration Notes](#configuration-notes)
+- [Continuous Integration](#continuous-integration)
+- [License](#license)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Overview
 
-## Learning Laravel
+AuthnAuth is a Blade-only, server-rendered monolith — there's no SPA framework and no JSON API surface, just plain forms and redirects. It's built around two things:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+1. **Authentication** — registration, login, "forgot password" / "reset password", and a forced password-change flow for accounts that were provisioned with a temporary password.
+2. **Authorization** — a hand-rolled role/permission system with an ordinal role hierarchy, so higher-privileged roles can manage lower-privileged ones without hardcoding every rule per-controller.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Features
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+- Email/password registration and login with session-based auth
+- Forgot/reset password flow using Laravel's built-in password broker
+- Forced password change on first login for admin-provisioned accounts
+- Role-based (`role:<name>`) and permission-based (`permission:<name>`) route middleware
+- An ordinal role hierarchy (`Role::level`) enforced centrally in a single policy — higher-level roles can manage lower-level ones; a role can never manage or delete itself, and the last remaining admin can't be deleted
+- Full user management UI: list/filter by role, create, edit, delete, with role-aware guardrails on who can assign which roles
+- A `php artisan app:create-admin` command for bootstrapping the first admin account on a fresh install
+- Named, per-route rate limiting on login, registration, and password reset
+- Idempotent database seeders for roles and permissions — safe to re-run at any time
 
-## Agentic Development
+## Tech Stack
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+| Layer | Choice |
+|---|---|
+| Language | PHP ^8.3 |
+| Framework | Laravel ^13.17 |
+| Views | Blade (server-rendered, no SPA framework) |
+| Frontend build | Vite + Tailwind CSS 4 |
+| Database | MySQL (SQLite supported for local/dev/testing) |
+| Testing | PHPUnit (`RefreshDatabase`), run via `php artisan test` |
+| Static analysis | Larastan (PHPStan for Laravel), level 5 |
+| Code style | Laravel Pint |
+| CI | GitHub Actions |
+
+## Access Control Model
+
+Authorization is split across two complementary layers:
+
+- **Route-level gating** (`role:<name>` / `permission:<name>` middleware) — coarse-grained "can this user even reach this route" checks, backed by `User::hasRole()` / `User::hasPermission()`.
+- **Management authorization** (`app/Policies/UserPolicy.php`) — fine-grained "who can create/edit/delete/assign a role to whom", based on an ordinal `Role::level` column (seeded as `admin = 100`, `manager = 50`, `user = 10`, with gaps left for inserting new tiers later). The rule: `admin` is the one special case that can manage anyone, including other admins; every other role can only manage roles at a strictly lower level; nobody can manage themselves; and the last remaining admin can never be deleted.
+
+This keeps the hierarchy logic in one place instead of duplicated across controllers.
+
+## Requirements
+
+- PHP 8.3+
+- Composer
+- Node.js + npm (for the Vite/Tailwind asset build)
+- A database — MySQL, or SQLite for a quick local setup
+
+## Getting Started
 
 ```bash
-composer require laravel/boost --dev
+git clone git@github.com:mothilal-jadhav/AuthnAuth.git
+cd AuthnAuth
 
-php artisan boost:install
+composer setup
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+`composer setup` runs the full bootstrap in one shot: installs PHP dependencies, copies `.env.example` to `.env` if it doesn't exist yet, generates the app key, runs migrations, installs npm dependencies, and builds frontend assets.
 
-## Contributing
+Then seed the roles and permissions tables (not run automatically by `composer setup`, and always safe to re-run):
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+php artisan db:seed
+```
 
-## Code of Conduct
+This creates the three default roles (`admin`, `manager`, `user`) and their associated permissions.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Provisioning an Admin Account
 
-## Security Vulnerabilities
+There's no self-service way to become an admin — the first admin account is created via an Artisan command:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+php artisan app:create-admin admin@example.com
+```
+
+- Requires the roles table to be seeded first (`php artisan db:seed`).
+- Refuses to run in a `production` environment unless you pass `--force`.
+- Omit `--password` to get a random 16-character password printed once to the console.
+- The account is created with `must_change_password = true`, so the user is forced through the change-password flow on first login regardless of which password was used.
+
+```bash
+php artisan app:create-admin admin@example.com --password=SomeStrongPassword! --force
+```
+
+## Running the App
+
+```bash
+composer dev
+```
+
+This runs the dev server, queue listener, log viewer (Pail), and Vite together via `concurrently`. Visit `http://localhost:8000`.
+
+## Testing & Code Quality
+
+Run the same checks CI runs, in the same order:
+
+```bash
+composer format:check   # Laravel Pint — code style
+composer analyse         # Larastan — static analysis
+composer test              # PHPUnit — test suite
+```
+
+Use `composer format` (without `:check`) to auto-fix style issues.
+
+Tests read database configuration from a local `.env.testing` (copy it from `.env.testing.example`); CI instead points directly at an in-memory SQLite database, so no file is needed there.
+
+## Project Structure
+
+```
+app/
+  Console/Commands/       Artisan commands (e.g. app:create-admin)
+  Http/Controllers/Auth/  Login, Register, ForgotPassword, ResetPassword, ChangePassword
+  Http/Controllers/       Admin dashboard, user management
+  Http/Middleware/        Role/permission route guards, forced-password-change redirect
+  Models/                 User, Role, Permission
+  Policies/                UserPolicy — the role-hierarchy management rules
+  Providers/               Policy + rate limiter registration
+
+database/
+  migrations/              Users, roles, permissions, and their pivot/foreign-key wiring
+  seeders/                 Idempotent Role/Permission/RolePermission seeders
+
+resources/views/           Blade templates (no SPA framework)
+routes/web.php             All application routes
+tests/                     PHPUnit feature and unit tests
+```
+
+## Routes
+
+| Purpose | Method / Path | Middleware |
+|---|---|---|
+| Register | `GET/POST /register` | `throttle:register` on submit |
+| Login | `GET/POST /login` | `throttle:login` on submit |
+| Logout | `POST /logout` | `auth` |
+| Dashboard | `GET /dashboard` | `auth` |
+| Forgot / reset password | `GET/POST /forgot-password`, `GET/POST /reset-password/{token}` | `guest`, `throttle:password-reset` |
+| Change password | `GET/POST /password/change` | `auth` |
+| Admin panel | `GET /admin` | `auth`, `role:admin` |
+| User management | `GET/POST/PUT/DELETE /users*` | `auth`, `permission:users.view\|create\|update\|delete` |
+| Profile | `GET /profile` | `auth` |
+
+## Configuration Notes
+
+- **Mail**: `.env` defaults to `MAIL_MAILER=log`, which is dev-only — password-reset emails are written to the log file instead of being delivered. Set a real mail transport (SES, SMTP, Postmark, etc.) before relying on password resets in any non-local environment.
+- **Sessions/queue/cache**: default to the `database` driver; make sure migrations have run before relying on them.
+
+## Continuous Integration
+
+Every push and pull request against `main` runs via GitHub Actions (`.github/workflows/ci.yml`): install dependencies against an in-memory SQLite database, then `composer format:check` → `composer analyse` → `composer test`, in that order.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is licensed under the MIT License, as declared in `composer.json`.
