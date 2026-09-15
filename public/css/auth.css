@@ -964,6 +964,38 @@ body {
 
 
 /* =========================
+   ROLE FILTER
+========================= */
+
+.role-filter {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.role-filter a {
+    padding: 7px 14px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 7px;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.role-filter a.active {
+    background: #111827;
+    border-color: #111827;
+    color: #ffffff;
+}
+
+.pagination-wrapper {
+    padding: 16px 22px;
+}
+
+
+/* =========================
    USER GROUPS
 ========================= */
 

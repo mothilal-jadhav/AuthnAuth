@@ -7,11 +7,12 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 
-#[Fillable(['name', 'email', 'password', 'role_id'])]
+#[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -43,8 +44,25 @@ class User extends Authenticatable
 
     public function hasPermission(string $permission): bool
     {
-        return $this->role
-            ?->permissions
-            ->contains('name', $permission) ?? false;
+        if (! $this->role_id) {
+            return false;
+        }
+
+        return in_array($permission, $this->cachedRolePermissionNames(), true);
+    }
+
+    /**
+     * Permission names for this user's role, cached per role so
+     * permission-gated routes don't hit role+pivot on every request.
+     * Roles/permissions are managed outside the app UI today, so a short
+     * TTL (rather than event-based invalidation) is an acceptable tradeoff.
+     */
+    private function cachedRolePermissionNames(): array
+    {
+        return Cache::remember(
+            "role:{$this->role_id}:permissions",
+            now()->addMinutes(30),
+            fn () => $this->role->permissions()->pluck('name')->all()
+        );
     }
 }

@@ -8,6 +8,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Auth\ChangePasswordController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -16,6 +17,7 @@ Route::get('/', function () {
 Route::get('/register', [RegisterController::class, 'showRegistrationForm']);
 
 Route::post('/register', [RegisterController::class, 'register'])
+    ->middleware('throttle:register')
     ->name('register.store');
 
 Route::get('/dashboard', function () {
@@ -35,6 +37,7 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])
     ->name('login');
 
 Route::post('/login', [LoginController::class, 'login'])
+    ->middleware('throttle:login')
     ->name('login.submit');
 
 Route::get('/admin', [AdminController::class, 'index'])
@@ -46,7 +49,7 @@ Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkReques
     ->name('password.request');
 
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])
-    ->middleware('guest')
+    ->middleware(['guest', 'throttle:password-reset'])
     ->name('password.email');
 
 Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])
@@ -54,7 +57,7 @@ Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showRese
     ->name('password.reset');
 
 Route::post('/reset-password', [ResetPasswordController::class, 'reset'])
-    ->middleware('guest')
+    ->middleware(['guest', 'throttle:password-reset'])
     ->name('password.update');
 
 Route::get('/users', [UserManagementController::class, 'index'])
@@ -84,3 +87,11 @@ Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])
 Route::get('/profile', function () {
     return view('profile');
 })->middleware('auth')->name('profile');
+
+Route::get('/password/change', [ChangePasswordController::class, 'showForm'])
+    ->middleware('auth')
+    ->name('password.change');
+
+Route::post('/password/change', [ChangePasswordController::class, 'update'])
+    ->middleware('auth')
+    ->name('password.change.update');

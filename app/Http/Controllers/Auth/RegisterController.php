@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rules\Password;
 
 class RegisterController extends Controller
 {
@@ -16,36 +15,27 @@ class RegisterController extends Controller
         return view('auth.register');
     }
 
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'regex:/^[a-zA-Z\s]+$/', 'max:255'],
-            'email' => [
-                'required', 
-                'email', 
-                'max:255', 
-                'unique:users,email',
-                'regex:/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/',
-            ],
-            'password' => [
-                'required',
-                'string',
-                'confirmed',
-                Password::min(8)
-                    ->mixedCase()
-                    ->numbers()
-                    ->symbols(),
-            ],
-        ]);
+        $validated = $request->validated();
 
-        $userRole = Role::where('name', 'user')->firstOrFail();
+        try {
+            $userRole = Role::where('name', 'user')->firstOrFail();
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            report($e);
 
-        $user = User::create([
+            return back()->withErrors([
+                'email' => 'Registration is temporarily unavailable. Please try again later.',
+            ])->onlyInput('name', 'email');
+        }
+
+        $user = new User([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => $validated['password'],
-            'role_id' => $userRole->id,
         ]);
+        $user->role_id = $userRole->id;
+        $user->save();
 
         Auth::login($user);
 

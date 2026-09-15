@@ -2,69 +2,54 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 
 class UserManagementController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $users = User::with('role')
+            ->when($request->filled('role'), fn ($query) => $query->whereHas(
+                'role',
+                fn ($q) => $q->where('name', $request->input('role'))
+            ))
             ->orderBy('name')
-            ->get();
+            ->paginate(25)
+            ->withQueryString();
 
-        $admins = $users->filter(
-            fn ($user) => $user->role?->name === 'admin'
-        );
+        $roleCounts = User::join('roles', 'roles.id', '=', 'users.role_id')
+            ->selectRaw('roles.name, count(*) as total')
+            ->groupBy('roles.name')
+            ->pluck('total', 'name');
 
-        $managers = $users->filter(
-            fn ($user) => $user->role?->name === 'manager'
-        );
-
-        $normalUsers = $users->filter(
-            fn ($user) => $user->role?->name === 'user'
-        );
-
-        return view('users.index', compact(
-            'admins',
-            'managers',
-            'normalUsers'
-        ));
+        return view('users.index', compact('users', 'roleCounts'));
     }
 
     public function create()
     {
-        $roles = Role::orderBy('name')->get();
+        $roles = $this->assignableRoles();
 
         return view('users.create', compact('roles'));
     }
 
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'regex:/^[a-zA-Z\s]+$/', 'max:255'],
-            'email' => [
-                'required', 
-                'email', 
-                'max:255', 
-                'unique:users,email',
-                'regex:/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/',
-            ],
-            'role_id' => ['required', 'exists:roles,id'],
-        ]);
+        $validated = $request->validated();
 
         $temporaryPassword = Str::password(12);
 
-        $user = User::create([
+        $user = new User([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => $temporaryPassword,
-            'role_id' => $validated['role_id'],
         ]);
-
+        $user->role_id = $validated['role_id'];
+        $user->must_change_password = true;
         $user->save();
 
         return redirect()
@@ -77,68 +62,27 @@ class UserManagementController extends Controller
             ]);
     }
 
-    private function canManageUser(User $target): bool
-    {
-        $currentUser = auth()->user();
-
-        // Admin can manage everyone.
-        if ($currentUser->role->name === 'admin') {
-            return true;
-        }
-
-        // Manager can manage only normal users.
-        if (
-            $currentUser->role->name === 'manager' &&
-            $target->role?->name === 'user'
-        ) {
-            return true;
-        }
-
-        // Normal users cannot manage anyone.
-        return false;
-    }
-
     public function edit(User $user)
     {
-        abort_unless($this->canManageUser($user), 403);
+        $this->authorize('update', $user);
 
-        $roles = Role::orderBy('name')->get();
+        $roles = $this->assignableRoles();
 
         return view('users.edit', compact('user', 'roles'));
     }
 
-    public function update(Request $request, User $user)
+    public function update(UpdateUserRequest $request, User $user)
     {
-        abort_unless($this->canManageUser($user), 403);
+        $validated = $request->validated();
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'regex:/^[a-zA-Z\s]+$/', 'max:255'],
-            'email' => [
-                'required', 
-                'email', 
-                'max:255', 
-                'regex:/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/',
-                Rule::unique('users', 'email')->ignore($user->id),
-            ],
-            'role_id' => [
-                'required',
-                'exists:roles,id',
-            ],
-        ]);
+        $this->authorize('assignRole', [User::class, (int) $validated['role_id']]);
 
-        // Manager cannot promote a normal user to manager/admin.
-        if (
-            auth()->user()->role->name === 'manager' &&
-            Role::find($validated['role_id'])->name !== 'user'
-        ) {
-            abort(403);
-        }
-
-        $user->update([
+        $user->fill([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'role_id' => $validated['role_id'],
         ]);
+        $user->role_id = $validated['role_id'];
+        $user->save();
 
         return redirect()
             ->route('users.index')
@@ -147,12 +91,27 @@ class UserManagementController extends Controller
 
     public function destroy(User $user)
     {
-        abort_unless($this->canManageUser($user), 403);
+        $this->authorize('delete', $user);
 
         $user->delete();
 
         return redirect()
             ->route('users.index')
             ->with('success', 'User deleted successfully.');
+    }
+
+    /**
+     * Roles the current actor is allowed to assign, so the create/edit
+     * dropdowns never even offer a role the backend would reject.
+     */
+    private function assignableRoles()
+    {
+        $actorLevel = auth()->user()->role->level ?? 0;
+
+        if (auth()->user()->role->name === 'admin') {
+            return Role::orderBy('name')->get();
+        }
+
+        return Role::where('level', '<', $actorLevel)->orderBy('name')->get();
     }
 }
