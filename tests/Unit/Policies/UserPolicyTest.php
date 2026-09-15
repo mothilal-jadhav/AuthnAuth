@@ -24,7 +24,7 @@ class UserPolicyTest extends TestCase
     {
         parent::setUp();
 
-        $this->policy = new UserPolicy();
+        $this->policy = new UserPolicy;
 
         $this->adminRole = Role::create(['name' => 'admin', 'level' => 100]);
         $this->managerRole = Role::create(['name' => 'manager', 'level' => 50]);

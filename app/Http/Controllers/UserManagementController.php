@@ -106,12 +106,12 @@ class UserManagementController extends Controller
      */
     private function assignableRoles()
     {
-        $actorLevel = auth()->user()->role->level ?? 0;
+        $actorRole = auth()->user()->role;
 
-        if (auth()->user()->role->name === 'admin') {
+        if ($actorRole->name === 'admin') {
             return Role::orderBy('name')->get();
         }
 
-        return Role::where('level', '<', $actorLevel)->orderBy('name')->get();
+        return Role::where('level', '<', $actorRole->level)->orderBy('name')->get();
     }
 }

@@ -25,13 +25,17 @@ class UserPolicy
      */
     public function assignRole(User $actor, int $roleId): bool
     {
-        if ($actor->role?->name === 'admin') {
+        if ($actor->role->name === 'admin') {
             return true;
         }
 
-        $targetLevel = Role::find($roleId)?->level ?? PHP_INT_MAX;
+        $targetRole = Role::find($roleId);
 
-        return ($actor->role?->level ?? 0) > $targetLevel;
+        if ($targetRole === null) {
+            return false;
+        }
+
+        return $actor->role->level > $targetRole->level;
     }
 
     public function update(User $actor, User $target): bool
@@ -45,7 +49,7 @@ class UserPolicy
             return false;
         }
 
-        if ($target->role?->name === 'admin' && $this->isLastAdmin($target)) {
+        if ($target->role->name === 'admin' && $this->isLastAdmin($target)) {
             return false;
         }
 
@@ -63,11 +67,11 @@ class UserPolicy
             return false;
         }
 
-        if ($actor->role?->name === 'admin') {
+        if ($actor->role->name === 'admin') {
             return true;
         }
 
-        return ($actor->role?->level ?? 0) > ($target->role?->level ?? PHP_INT_MAX);
+        return $actor->role->level > $target->role->level;
     }
 
     private function isLastAdmin(User $target): bool
