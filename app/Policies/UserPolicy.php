@@ -9,10 +9,31 @@ class UserPolicy
 {
     /**
      * Whether $actor may create a user assigned to the given role.
+     *
+     * Unlike assignRole() (used for role changes on existing users), this
+     * allows same-level creation for roles above the base "user" tier: a
+     * manager may create another manager, but never an admin, and a plain
+     * user may never create anyone. Kept separate from assignRole() so
+     * this doesn't also open up promoting an existing user to manager
+     * during an edit.
      */
     public function create(User $actor, int $targetRoleId): bool
     {
-        return $this->assignRole($actor, $targetRoleId);
+        if ($actor->role->name === 'admin') {
+            return true;
+        }
+
+        if ($actor->role->name === 'user') {
+            return false;
+        }
+
+        $targetRole = Role::find($targetRoleId);
+
+        if ($targetRole === null) {
+            return false;
+        }
+
+        return $actor->role->level >= $targetRole->level;
     }
 
     /**

@@ -45,12 +45,12 @@ class UserPolicyTest extends TestCase
         $this->assertTrue($this->policy->create($admin, $this->userRole->id));
     }
 
-    public function test_manager_can_create_user_but_not_manager_or_admin(): void
+    public function test_manager_can_create_manager_or_user_but_not_admin(): void
     {
         $manager = $this->makeUser($this->managerRole);
 
         $this->assertTrue($this->policy->create($manager, $this->userRole->id));
-        $this->assertFalse($this->policy->create($manager, $this->managerRole->id));
+        $this->assertTrue($this->policy->create($manager, $this->managerRole->id));
         $this->assertFalse($this->policy->create($manager, $this->adminRole->id));
     }
 

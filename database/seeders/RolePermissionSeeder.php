@@ -21,7 +21,9 @@ class RolePermissionSeeder extends Seeder
         $manager->permissions()->sync(
             Permission::whereIn('name', [
                 'users.view',
+                'users.create',
                 'users.update',
+                'profile.view',
             ])->pluck('id')
         );
 

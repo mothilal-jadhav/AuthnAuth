@@ -32,7 +32,7 @@ class UserManagementController extends Controller
 
     public function create()
     {
-        $roles = $this->assignableRoles();
+        $roles = $this->assignableRoles(forCreate: true);
 
         return view('users.create', compact('roles'));
     }
@@ -103,8 +103,12 @@ class UserManagementController extends Controller
     /**
      * Roles the current actor is allowed to assign, so the create/edit
      * dropdowns never even offer a role the backend would reject.
+     *
+     * $forCreate mirrors UserPolicy::create()'s same-level allowance (a
+     * manager may create another manager) without extending it to editing
+     * an existing user's role, which stays strictly-lower.
      */
-    private function assignableRoles()
+    private function assignableRoles(bool $forCreate = false)
     {
         $actorRole = auth()->user()->role;
 
@@ -112,6 +116,8 @@ class UserManagementController extends Controller
             return Role::orderBy('name')->get();
         }
 
-        return Role::where('level', '<', $actorRole->level)->orderBy('name')->get();
+        $operator = $forCreate ? '<=' : '<';
+
+        return Role::where('level', $operator, $actorRole->level)->orderBy('name')->get();
     }
 }
