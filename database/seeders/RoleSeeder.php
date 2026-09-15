@@ -11,8 +11,8 @@ class RoleSeeder extends Seeder
     {
         // Higher level manages lower. Leave gaps between tiers so new
         // intermediate roles can be inserted without renumbering these.
-        Role::create(['name' => 'admin', 'level' => 100]);
-        Role::create(['name' => 'manager', 'level' => 50]);
-        Role::create(['name' => 'user', 'level' => 10]);
+        Role::firstOrCreate(['name' => 'admin'], ['level' => 100]);
+        Role::firstOrCreate(['name' => 'manager'], ['level' => 50]);
+        Role::firstOrCreate(['name' => 'user'], ['level' => 10]);
     }
 }
