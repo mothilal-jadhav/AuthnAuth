@@ -28,10 +28,6 @@
                 Login
             </a>
 
-            <a href="/register" class="btn register">
-                Register
-            </a>
-
         </div>
 
     </div>

@@ -11,35 +11,11 @@ class AuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_page_is_accessible(): void
+    public function test_registration_route_no_longer_exists(): void
     {
         $response = $this->get('/register');
 
-        $response->assertStatus(200);
-    }
-
-    public function test_user_can_register(): void
-    {
-        $role = Role::create([
-            'name' => 'user',
-        ]);
-
-        $response = $this->post('/register', [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => 'Password123!',
-            'password_confirmation' => 'Password123!',
-        ]);
-
-        $response->assertRedirect('/dashboard');
-
-        $this->assertDatabaseHas('users', [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'role_id' => $role->id,
-        ]);
-
-        $this->assertAuthenticated();
+        $response->assertStatus(404);
     }
 
     public function test_user_can_login_with_correct_credentials(): void

@@ -66,11 +66,6 @@
 
         </form>
 
-        <div class="auth-footer">
-            Don't have an account?
-            <a href="{{ url('/register') }}">Create an account</a>
-        </div>
-
     </div>
 
 </div>

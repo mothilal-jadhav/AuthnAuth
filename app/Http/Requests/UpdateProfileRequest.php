@@ -1,15 +1,20 @@
 <?php
 
-namespace App\Http\Requests\Auth;
+namespace App\Http\Requests;
 
 use App\Http\Requests\Concerns\HasNameEmailRules;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Password;
 
-class RegisterRequest extends FormRequest
+class UpdateProfileRequest extends FormRequest
 {
     use HasNameEmailRules;
+
+    /**
+     * Named error bag so a validation failure here doesn't get shown under
+     * the separate password-change form on the same /profile page.
+     */
+    protected $errorBag = 'updateProfile';
 
     /**
      * Determine if the user is authorized to make this request.
@@ -28,13 +33,7 @@ class RegisterRequest extends FormRequest
     {
         return [
             'name' => $this->nameRules(),
-            'email' => $this->emailRules(),
-            'password' => [
-                'required',
-                'string',
-                'confirmed',
-                Password::min(8)->mixedCase()->numbers()->symbols(),
-            ],
+            'email' => $this->emailRules($this->user()->id),
         ];
     }
 }

@@ -31,7 +31,6 @@ class AppServiceProvider extends ServiceProvider
         // keys solely on IP+domain (no route in the signature), so every
         // route using it would share one combined bucket per IP.
         RateLimiter::for('login', fn (Request $request) => Limit::perMinute(6)->by($request->ip()));
-        RateLimiter::for('register', fn (Request $request) => Limit::perMinute(6)->by($request->ip()));
         RateLimiter::for('password-reset', fn (Request $request) => Limit::perMinute(6)->by($request->ip()));
     }
 }

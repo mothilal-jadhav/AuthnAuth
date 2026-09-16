@@ -5,8 +5,8 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -14,12 +14,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
-
-Route::get('/register', [RegisterController::class, 'showRegistrationForm']);
-
-Route::post('/register', [RegisterController::class, 'register'])
-    ->middleware('throttle:register')
-    ->name('register.store');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
@@ -96,9 +90,17 @@ Route::post('/users/{id}/restore', [UserManagementController::class, 'restore'])
     ->middleware(['auth', 'permission:users.restore'])
     ->name('users.restore');
 
-Route::get('/profile', function () {
-    return view('profile');
-})->middleware('auth')->name('profile');
+Route::get('/profile', [ProfileController::class, 'show'])
+    ->middleware('auth')
+    ->name('profile');
+
+Route::put('/profile', [ProfileController::class, 'update'])
+    ->middleware('auth')
+    ->name('profile.update');
+
+Route::put('/profile/password', [ProfileController::class, 'updatePassword'])
+    ->middleware('auth')
+    ->name('profile.password.update');
 
 Route::get('/password/change', [ChangePasswordController::class, 'showForm'])
     ->middleware('auth')
