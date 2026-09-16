@@ -212,6 +212,37 @@
                     </div>
 
 
+                    <div class="form-group">
+
+                        <label for="department_id">
+                            Department
+                        </label>
+
+                        <select
+                            id="department_id"
+                            name="department_id"
+                        >
+
+                            <option value="">
+                                No department
+                            </option>
+
+                            @foreach ($departments as $department)
+
+                                <option
+                                    value="{{ $department->id }}"
+                                    {{ old('department_id') == $department->id ? 'selected' : '' }}
+                                >
+                                    {{ $department->name }}
+                                </option>
+
+                            @endforeach
+
+                        </select>
+
+                    </div>
+
+
                     <div class="form-info">
 
                         <strong>Password</strong>

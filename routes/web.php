@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Auth;
@@ -89,6 +90,30 @@ Route::get('/users/trashed', [UserManagementController::class, 'trashed'])
 Route::post('/users/{id}/restore', [UserManagementController::class, 'restore'])
     ->middleware(['auth', 'permission:users.restore'])
     ->name('users.restore');
+
+Route::get('/departments', [DepartmentController::class, 'index'])
+    ->middleware(['auth', 'permission:departments.view'])
+    ->name('departments.index');
+
+Route::get('/departments/create', [DepartmentController::class, 'create'])
+    ->middleware(['auth', 'permission:departments.create'])
+    ->name('departments.create');
+
+Route::post('/departments', [DepartmentController::class, 'store'])
+    ->middleware(['auth', 'permission:departments.create'])
+    ->name('departments.store');
+
+Route::get('/departments/{department}/edit', [DepartmentController::class, 'edit'])
+    ->middleware(['auth', 'permission:departments.update'])
+    ->name('departments.edit');
+
+Route::put('/departments/{department}', [DepartmentController::class, 'update'])
+    ->middleware(['auth', 'permission:departments.update'])
+    ->name('departments.update');
+
+Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])
+    ->middleware(['auth', 'permission:departments.delete'])
+    ->name('departments.destroy');
 
 Route::get('/profile', [ProfileController::class, 'show'])
     ->middleware('auth')

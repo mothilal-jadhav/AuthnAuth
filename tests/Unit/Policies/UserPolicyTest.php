@@ -140,4 +140,26 @@ class UserPolicyTest extends TestCase
 
         $this->assertFalse($this->policy->restore($admin, $admin));
     }
+
+    public function test_admin_can_assign_functional_roles_to_anyone_but_themselves(): void
+    {
+        $admin = $this->makeUser($this->adminRole);
+        $otherAdmin = $this->makeUser($this->adminRole);
+        $user = $this->makeUser($this->userRole);
+
+        $this->assertTrue($this->policy->assignFunctionalRoles($admin, $otherAdmin));
+        $this->assertTrue($this->policy->assignFunctionalRoles($admin, $user));
+        $this->assertFalse($this->policy->assignFunctionalRoles($admin, $admin));
+    }
+
+    public function test_manager_can_assign_functional_roles_to_lower_level_user_but_not_peers_or_self(): void
+    {
+        $manager = $this->makeUser($this->managerRole);
+        $otherManager = $this->makeUser($this->managerRole);
+        $user = $this->makeUser($this->userRole);
+
+        $this->assertTrue($this->policy->assignFunctionalRoles($manager, $user));
+        $this->assertFalse($this->policy->assignFunctionalRoles($manager, $otherManager));
+        $this->assertFalse($this->policy->assignFunctionalRoles($manager, $manager));
+    }
 }

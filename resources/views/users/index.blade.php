@@ -113,6 +113,7 @@
                         <th>User</th>
                         <th>Email</th>
                         <th>Role</th>
+                        <th>Department</th>
                         <th class="actions-column">Actions</th>
                     </tr>
                 </thead>
@@ -145,6 +146,10 @@
                                 <span class="role-badge role-{{ $user->role->name }}">
                                     {{ strtoupper($user->role->name) }}
                                 </span>
+                            </td>
+
+                            <td>
+                                {{ $user->department->name ?? '—' }}
                             </td>
 
                             <td>
@@ -197,7 +202,7 @@
                     @empty
 
                         <tr>
-                            <td colspan="4" class="empty-state">
+                            <td colspan="5" class="empty-state">
                                 No users found.
                             </td>
                         </tr>

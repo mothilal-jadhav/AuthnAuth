@@ -9,6 +9,7 @@ class Permission extends Model
 {
     protected $fillable = [
         'name',
+        'group',
     ];
 
     public function roles(): BelongsToMany

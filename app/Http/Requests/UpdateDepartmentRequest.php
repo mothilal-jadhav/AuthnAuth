@@ -2,22 +2,18 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\Concerns\HasNameEmailRules;
-use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreUserRequest extends FormRequest
+class UpdateDepartmentRequest extends FormRequest
 {
-    use HasNameEmailRules;
-
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return $this->user()->can('create', [User::class, (int) $this->input('role_id')]);
+        return true;
     }
 
     /**
@@ -28,10 +24,11 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => $this->nameRules(),
-            'email' => $this->emailRules(),
-            'role_id' => ['required', Rule::exists('roles', 'id')->where('type', 'hierarchy')],
-            'department_id' => ['nullable', 'exists:departments,id'],
+            'name' => [
+                'required', 'string', 'max:255',
+                Rule::unique('departments', 'name')->ignore($this->route('department')),
+            ],
+            'head_user_id' => ['nullable', 'exists:users,id'],
         ];
     }
 }

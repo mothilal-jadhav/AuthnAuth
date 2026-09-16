@@ -134,6 +134,71 @@
                 </div>
 
 
+                <div class="form-group">
+
+                    <label for="department_id">
+                        Department
+                    </label>
+
+                    <select
+                        id="department_id"
+                        name="department_id"
+                    >
+
+                        <option value="">
+                            No department
+                        </option>
+
+                        @foreach ($departments as $department)
+
+                            <option
+                                value="{{ $department->id }}"
+                                {{ old('department_id', $user->department_id) == $department->id ? 'selected' : '' }}
+                            >
+                                {{ $department->name }}
+                            </option>
+
+                        @endforeach
+
+                    </select>
+
+                </div>
+
+
+                @can('assignFunctionalRoles', $user)
+
+                    <input type="hidden" name="functional_role_ids_submitted" value="1">
+
+                    <div class="form-group">
+
+                        <label>
+                            Functional Roles
+                        </label>
+
+                        <p>
+                            Additive permissions that don't affect
+                            {{ $user->name }}'s management hierarchy.
+                        </p>
+
+                        @foreach ($functionalRoles as $functionalRole)
+
+                            <label class="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    name="functional_role_ids[]"
+                                    value="{{ $functionalRole->id }}"
+                                    {{ in_array($functionalRole->id, old('functional_role_ids', $user->functionalRoles->pluck('id')->all())) ? 'checked' : '' }}
+                                >
+                                {{ $functionalRole->name }}
+                            </label>
+
+                        @endforeach
+
+                    </div>
+
+                @endcan
+
+
                 <button
                     type="submit"
                     class="auth-button"

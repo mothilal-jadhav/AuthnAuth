@@ -24,11 +24,47 @@ class RolePermissionSeeder extends Seeder
                 'users.create',
                 'users.update',
                 'profile.view',
+                'departments.view',
+                'roles.assign',
             ])->pluck('id')
         );
 
         $user->permissions()->sync(
             Permission::where('name', 'profile.view')->pluck('id')
+        );
+
+        $hrOfficer = Role::where('name', 'HR Officer')->first();
+        $payrollOfficer = Role::where('name', 'Payroll Officer')->first();
+        $recruiter = Role::where('name', 'Recruiter')->first();
+        $attendanceAdmin = Role::where('name', 'Attendance Admin')->first();
+
+        $hrOfficer->permissions()->sync(
+            Permission::whereIn('name', [
+                'departments.view',
+                'leave.view',
+                'leave.approve',
+            ])->pluck('id')
+        );
+
+        $payrollOfficer->permissions()->sync(
+            Permission::whereIn('name', [
+                'payroll.view',
+                'payroll.manage',
+            ])->pluck('id')
+        );
+
+        $recruiter->permissions()->sync(
+            Permission::whereIn('name', [
+                'recruitment.view',
+                'recruitment.manage',
+            ])->pluck('id')
+        );
+
+        $attendanceAdmin->permissions()->sync(
+            Permission::whereIn('name', [
+                'attendance.view',
+                'attendance.manage',
+            ])->pluck('id')
         );
     }
 }

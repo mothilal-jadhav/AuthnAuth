@@ -178,6 +178,27 @@
                 @endif
 
 
+                @if(auth()->user()->hasPermission('departments.view'))
+
+                    <a href="{{ route('departments.index') }}" class="action-card">
+
+                        <div class="action-icon">
+                            🏢
+                        </div>
+
+                        <div>
+                            <h3>Departments</h3>
+
+                            <p>
+                                Manage departments and their heads.
+                            </p>
+                        </div>
+
+                    </a>
+
+                @endif
+
+
                 {{-- My Profile --}}
 
                 @if (auth()->user()->hasPermission('profile.view'))

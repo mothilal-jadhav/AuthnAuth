@@ -83,6 +83,20 @@ class UserPolicy
     }
 
     /**
+     * Whether $actor may assign/remove $target's functional roles
+     * (additive permission grants, e.g. Payroll Officer — see
+     * User::functionalRoles()). Deliberately reuses manage()'s rule rather
+     * than a looser one: this is still a privilege-granting action, so the
+     * same self-management block applies — an actor can never grant
+     * themselves extra functional access, even if they could otherwise
+     * manage lower-level users.
+     */
+    public function assignFunctionalRoles(User $actor, User $target): bool
+    {
+        return $this->manage($actor, $target);
+    }
+
+    /**
      * Shared rule for update/delete: an actor may never manage themselves.
      * Admin may manage anyone else; every other role may only manage
      * strictly-lower-level roles (mirrors create()'s ordinal rule).

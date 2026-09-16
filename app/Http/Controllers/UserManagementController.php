@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\ActivityLog;
+use App\Models\Department;
 use App\Models\Role;
 use App\Models\User;
 use App\Notifications\EmailChangedNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 
@@ -16,7 +18,7 @@ class UserManagementController extends Controller
 {
     public function index(Request $request)
     {
-        $users = User::with('role')
+        $users = User::with(['role', 'department'])
             ->when($request->filled('role'), fn ($query) => $query->whereHas(
                 'role',
                 fn ($q) => $q->where('name', $request->input('role'))
@@ -36,8 +38,9 @@ class UserManagementController extends Controller
     public function create()
     {
         $roles = $this->assignableRoles(forCreate: true);
+        $departments = Department::orderBy('name')->get();
 
-        return view('users.create', compact('roles'));
+        return view('users.create', compact('roles', 'departments'));
     }
 
     public function store(StoreUserRequest $request)
@@ -52,6 +55,7 @@ class UserManagementController extends Controller
             'password' => $temporaryPassword,
         ]);
         $user->role_id = $validated['role_id'];
+        $user->department_id = $validated['department_id'] ?? null;
         $user->must_change_password = true;
         $user->save();
 
@@ -77,8 +81,10 @@ class UserManagementController extends Controller
         $this->authorize('update', $user);
 
         $roles = $this->assignableRoles();
+        $departments = Department::orderBy('name')->get();
+        $functionalRoles = Role::functional()->orderBy('name')->get();
 
-        return view('users.edit', compact('user', 'roles'));
+        return view('users.edit', compact('user', 'roles', 'departments', 'functionalRoles'));
     }
 
     public function update(UpdateUserRequest $request, User $user)
@@ -94,6 +100,7 @@ class UserManagementController extends Controller
             'email' => $validated['email'],
         ]);
         $user->role_id = $validated['role_id'];
+        $user->department_id = $validated['department_id'] ?? null;
         $user->save();
 
         $changes = $user->getChanges();
@@ -109,6 +116,30 @@ class UserManagementController extends Controller
         if (array_key_exists('email', $changes)) {
             Notification::route('mail', array_unique([$oldEmail, $user->email]))
                 ->notify(new EmailChangedNotification($oldEmail, $user->email, auth()->user()->name));
+        }
+
+        // Checkboxes submit nothing at all when every box is unchecked, so a
+        // hidden marker field (not the checkbox array itself) is what tells
+        // us this section of the form was actually submitted.
+        $functionalRolesSubmitted = $request->boolean('functional_role_ids_submitted');
+
+        if ($functionalRolesSubmitted) {
+            $this->authorize('assignFunctionalRoles', $user);
+
+            $functionalRoleIds = $validated['functional_role_ids'] ?? [];
+
+            $user->functionalRoles()->sync($functionalRoleIds);
+
+            ActivityLog::record(
+                'user.functional_roles_updated',
+                $user,
+                auth()->user()->name.' updated this account\'s functional roles.',
+                ['functional_role_ids' => $functionalRoleIds]
+            );
+        }
+
+        if (array_key_exists('role_id', $changes) || $functionalRolesSubmitted) {
+            Cache::forget("user:{$user->id}:permissions");
         }
 
         return redirect()
@@ -175,11 +206,11 @@ class UserManagementController extends Controller
         $actorRole = auth()->user()->role;
 
         if ($actorRole->name === 'admin') {
-            return Role::orderBy('name')->get();
+            return Role::hierarchy()->orderBy('name')->get();
         }
 
         $operator = $forCreate ? '<=' : '<';
 
-        return Role::where('level', $operator, $actorRole->level)->orderBy('name')->get();
+        return Role::hierarchy()->where('level', $operator, $actorRole->level)->orderBy('name')->get();
     }
 }
