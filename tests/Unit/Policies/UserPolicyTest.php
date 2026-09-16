@@ -111,4 +111,33 @@ class UserPolicyTest extends TestCase
         $this->assertFalse($this->policy->update($user, $otherUser));
         $this->assertFalse($this->policy->delete($user, $otherUser));
     }
+
+    public function test_admin_can_restore_a_deleted_user(): void
+    {
+        $admin = $this->makeUser($this->adminRole);
+        $user = $this->makeUser($this->userRole);
+        $user->delete();
+
+        $this->assertTrue($this->policy->restore($admin, $user));
+    }
+
+    public function test_manager_can_restore_a_lower_level_user_but_not_a_peer(): void
+    {
+        $manager = $this->makeUser($this->managerRole);
+        $otherManager = $this->makeUser($this->managerRole);
+        $user = $this->makeUser($this->userRole);
+        $user->delete();
+        $otherManager->delete();
+
+        $this->assertTrue($this->policy->restore($manager, $user));
+        $this->assertFalse($this->policy->restore($manager, $otherManager));
+    }
+
+    public function test_actor_cannot_restore_themselves(): void
+    {
+        $admin = $this->makeUser($this->adminRole);
+        $admin->delete();
+
+        $this->assertFalse($this->policy->restore($admin, $admin));
+    }
 }

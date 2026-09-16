@@ -6,37 +6,7 @@
 
 <div class="dashboard-page">
 
-    <nav class="navbar">
-
-        <a href="{{ route('dashboard') }}" class="brand">
-            <span class="brand-name">AuthnAuth</span>
-            <span class="brand-subtitle">
-                Authentication & Authorization
-            </span>
-        </a>
-
-        <div class="nav-user">
-
-            <div class="nav-avatar">
-                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-            </div>
-
-            <div class="user-info">
-                <strong>{{ auth()->user()->name }}</strong>
-                <span>{{ auth()->user()->role->name }}</span>
-            </div>
-
-            <form method="POST" action="{{ url('/logout') }}">
-                @csrf
-
-                <button type="submit" class="logout-button">
-                    Logout
-                </button>
-            </form>
-
-        </div>
-
-    </nav>
+    @include('partials.navbar')
 
 
 <div class="users-page">
@@ -54,12 +24,22 @@
             </p>
         </div>
 
-        @if(auth()->user()->hasPermission('users.create'))
-            <a href="{{ route('users.create') }}" class="primary-button">
-                <span>+</span>
-                Create User
-            </a>
-        @endif
+        <div class="header-actions">
+
+            @if(auth()->user()->hasPermission('users.restore'))
+                <a href="{{ route('users.trashed') }}" class="secondary-button">
+                    Deleted Users
+                </a>
+            @endif
+
+            @if(auth()->user()->hasPermission('users.create'))
+                <a href="{{ route('users.create') }}" class="primary-button">
+                    <span>+</span>
+                    Create User
+                </a>
+            @endif
+
+        </div>
     </div>
 
 
@@ -186,6 +166,7 @@
                                             <form
                                                 method="POST"
                                                 action="{{ route('users.destroy', $user) }}"
+                                                data-confirm="Are you sure you want to delete this user?"
                                             >
                                                 @csrf
                                                 @method('DELETE')
@@ -193,7 +174,6 @@
                                                 <button
                                                     type="submit"
                                                     class="delete-button"
-                                                    onclick="return confirm('Are you sure you want to delete this user?')"
                                                 >
                                                     Delete
                                                 </button>

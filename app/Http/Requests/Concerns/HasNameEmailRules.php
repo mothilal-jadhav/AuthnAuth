@@ -13,6 +13,15 @@ trait HasNameEmailRules
 
     protected function emailRules(?int $ignoreUserId = null): array
     {
+        // Deliberately NOT scoped to whereNull('deleted_at'): the `email`
+        // column has a plain DB-level unique index, and MySQL has no
+        // partial/filtered unique index support, so the constraint still
+        // blocks a soft-deleted user's email regardless of what this
+        // validation rule allows. Scoping just the validation would let a
+        // request pass here and then fail with a raw DB integrity-violation
+        // 500 instead of a clean validation error. A trashed user's email
+        // stays reserved until they're restored (or a future change adds
+        // email-mangling-on-delete to free it up).
         $unique = Rule::unique('users', 'email');
 
         if ($ignoreUserId !== null) {

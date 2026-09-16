@@ -77,6 +77,11 @@ class UserPolicy
         return true;
     }
 
+    public function restore(User $actor, User $target): bool
+    {
+        return $this->manage($actor, $target);
+    }
+
     /**
      * Shared rule for update/delete: an actor may never manage themselves.
      * Admin may manage anyone else; every other role may only manage

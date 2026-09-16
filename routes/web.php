@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
@@ -43,6 +44,10 @@ Route::post('/login', [LoginController::class, 'login'])
 Route::get('/admin', [AdminController::class, 'index'])
     ->middleware(['auth', 'role:admin']);
 
+Route::get('/activity', [ActivityLogController::class, 'index'])
+    ->middleware(['auth', 'permission:activity.view'])
+    ->name('activity.index');
+
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])
     ->middleware('guest')
     ->name('password.request');
@@ -82,6 +87,14 @@ Route::put('/users/{user}', [UserManagementController::class, 'update'])
 Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])
     ->middleware(['auth', 'permission:users.delete'])
     ->name('users.destroy');
+
+Route::get('/users/trashed', [UserManagementController::class, 'trashed'])
+    ->middleware(['auth', 'permission:users.restore'])
+    ->name('users.trashed');
+
+Route::post('/users/{id}/restore', [UserManagementController::class, 'restore'])
+    ->middleware(['auth', 'permission:users.restore'])
+    ->name('users.restore');
 
 Route::get('/profile', function () {
     return view('profile');

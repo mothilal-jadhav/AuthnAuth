@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\ActivityLog;
 use App\Models\Role;
 use App\Models\User;
+use App\Notifications\EmailChangedNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 
 class UserManagementController extends Controller
@@ -52,6 +55,13 @@ class UserManagementController extends Controller
         $user->must_change_password = true;
         $user->save();
 
+        ActivityLog::record(
+            'user.created',
+            $user,
+            auth()->user()->name.' created this account.',
+            ['role' => $user->role->name]
+        );
+
         return redirect()
             ->route('users.create')
             ->with('created_user', [
@@ -77,12 +87,29 @@ class UserManagementController extends Controller
 
         $this->authorize('assignRole', [User::class, (int) $validated['role_id']]);
 
+        $oldEmail = $user->email;
+
         $user->fill([
             'name' => $validated['name'],
             'email' => $validated['email'],
         ]);
         $user->role_id = $validated['role_id'];
         $user->save();
+
+        $changes = $user->getChanges();
+        unset($changes['updated_at']);
+
+        ActivityLog::record(
+            'user.updated',
+            $user,
+            auth()->user()->name.' updated this account.',
+            $changes
+        );
+
+        if (array_key_exists('email', $changes)) {
+            Notification::route('mail', array_unique([$oldEmail, $user->email]))
+                ->notify(new EmailChangedNotification($oldEmail, $user->email, auth()->user()->name));
+        }
 
         return redirect()
             ->route('users.index')
@@ -95,9 +122,44 @@ class UserManagementController extends Controller
 
         $user->delete();
 
+        ActivityLog::record(
+            'user.deleted',
+            $user,
+            auth()->user()->name.' deleted this account.'
+        );
+
         return redirect()
             ->route('users.index')
             ->with('success', 'User deleted successfully.');
+    }
+
+    public function trashed()
+    {
+        $users = User::onlyTrashed()
+            ->with('role')
+            ->orderBy('deleted_at', 'desc')
+            ->paginate(25);
+
+        return view('users.trashed', compact('users'));
+    }
+
+    public function restore(int $id)
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+
+        $this->authorize('restore', $user);
+
+        $user->restore();
+
+        ActivityLog::record(
+            'user.restored',
+            $user,
+            auth()->user()->name.' restored this account.'
+        );
+
+        return redirect()
+            ->route('users.trashed')
+            ->with('success', 'User restored successfully.');
     }
 
     /**

@@ -6,37 +6,7 @@
 
 <div class="dashboard-page">
 
-    <nav class="navbar">
-
-        <a href="{{ route('dashboard') }}" class="brand">
-            <span class="brand-name">AuthnAuth</span>
-            <span class="brand-subtitle">
-                Authentication & Authorization
-            </span>
-        </a>
-
-        <div class="nav-user">
-
-            <div class="nav-avatar">
-                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-            </div>
-
-            <div class="user-info">
-                <strong>{{ auth()->user()->name }}</strong>
-                <span>{{ auth()->user()->role->name }}</span>
-            </div>
-
-            <form method="POST" action="{{ url('/logout') }}">
-                @csrf
-
-                <button type="submit" class="logout-button">
-                    Logout
-                </button>
-            </form>
-
-        </div>
-
-    </nav>
+    @include('partials.navbar')
 
 
     <main class="dashboard-container">
@@ -186,6 +156,26 @@
 
                 @endif
 
+
+                @if(auth()->user()->hasPermission('activity.view'))
+
+                    <a href="{{ route('activity.index') }}" class="action-card">
+
+                        <div class="action-icon">
+                            🕘
+                        </div>
+
+                        <div>
+                            <h3>Activity Log</h3>
+
+                            <p>
+                                Review recent account changes.
+                            </p>
+                        </div>
+
+                    </a>
+
+                @endif
 
 
                 {{-- My Profile --}}

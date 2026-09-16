@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\ActivityLog;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Console\Attributes\Description;
@@ -9,6 +10,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 #[Signature('app:create-admin {email} {--password=} {--force}')]
 #[Description('Provision the first admin account for a fresh install')]
@@ -25,7 +27,7 @@ class CreateAdminUser extends Command
         $email = $this->argument('email');
 
         $validator = Validator::make(['email' => $email], [
-            'email' => ['required', 'email', 'unique:users,email'],
+            'email' => ['required', 'email', Rule::unique('users', 'email')],
         ]);
 
         if ($validator->fails()) {
@@ -52,6 +54,13 @@ class CreateAdminUser extends Command
         $user->role_id = $adminRole->id;
         $user->must_change_password = true;
         $user->save();
+
+        ActivityLog::record(
+            'user.created',
+            $user,
+            'Admin account provisioned via app:create-admin.',
+            ['via' => 'app:create-admin']
+        );
 
         $this->info("Admin account created: {$email}");
 

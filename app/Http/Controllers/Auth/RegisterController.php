@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Models\ActivityLog;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -39,6 +40,8 @@ class RegisterController extends Controller
         $user->save();
 
         Auth::login($user);
+
+        ActivityLog::record('user.registered', $user, "{$user->name} self-registered.");
 
         $request->session()->regenerate();
 

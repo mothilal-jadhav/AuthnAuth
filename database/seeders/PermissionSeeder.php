@@ -14,7 +14,9 @@ class PermissionSeeder extends Seeder
             'users.create',
             'users.update',
             'users.delete',
+            'users.restore',
             'profile.view',
+            'activity.view',
         ];
 
         foreach ($permissions as $permission) {
