@@ -120,3 +120,15 @@ body {
 h1, h2, h3 {
     font-family: var(--font-display);
 }
+
+/* Hides the native scrollbar on horizontally-scrolling content rows (e.g.
+   the dashboard's action carousel) while keeping the element scrollable —
+   the arrow buttons are the visible affordance instead. */
+.scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}

@@ -42,19 +42,19 @@
     </div>
 
     <section>
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="scrollbar-hide -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-4 pb-2 sm:-mx-6 sm:px-6">
             @foreach ($quickActions as $action)
                 <a
                     href="{{ $action['href'] }}"
-                    class="group flex items-start gap-4 rounded-lg border border-line bg-paper p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                    class="group flex w-80 shrink-0 snap-start items-start gap-5 rounded-xl border border-line bg-paper p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:w-96"
                 >
-                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg {{ $chipColors[$action['color']] }}">
+                    <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-2xl {{ $chipColors[$action['color']] }}">
                         {{ $action['icon'] }}
                     </div>
 
                     <div>
-                        <h3 class="font-display font-semibold text-ink group-hover:text-brand-700">{{ $action['title'] }}</h3>
-                        <p class="mt-0.5 text-sm text-ink-muted">{{ $action['description'] }}</p>
+                        <h3 class="font-display text-lg font-semibold text-ink group-hover:text-brand-700">{{ $action['title'] }}</h3>
+                        <p class="mt-1 text-sm text-ink-muted">{{ $action['description'] }}</p>
                     </div>
                 </a>
             @endforeach
