@@ -4,98 +4,52 @@
 
 @section('content')
 
-<div class="dashboard-page">
+@include('partials.navbar')
 
-    @include('partials.navbar')
+<main class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
 
+    <x-page-header
+        eyebrow="Administration"
+        title="Activity Log"
+        subtitle="A record of account changes across the app."
+        back="{{ route('dashboard') }}"
+        backLabel="Back to Dashboard"
+    />
 
-<div class="users-page">
+    <x-table>
+        <thead>
+            <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">When</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Actor</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Action</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Subject</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Details</th>
+            </tr>
+        </thead>
 
-    <a href="{{ route('dashboard') }}" class="back-dashboard">
-        ← Back to Dashboard
-    </a>
+        <tbody>
+            @forelse ($activity as $entry)
+                <tr class="border-t border-line hover:bg-paper-alt">
+                    <td class="px-4 py-3 text-sm text-ink-muted">{{ $entry->created_at->diffForHumans() }}</td>
+                    <td class="px-4 py-3 text-sm text-ink-muted">{{ $entry->causer?->name ?? 'System' }}</td>
+                    <td class="px-4 py-3"><x-badge>{{ $entry->action }}</x-badge></td>
+                    <td class="px-4 py-3 text-sm text-ink-muted">{{ $entry->subject?->name ?? '—' }}</td>
+                    <td class="px-4 py-3 text-sm text-ink-muted">{{ $entry->description }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="5">
+                        <x-empty-state icon="🕘" title="Nothing to see yet" description="Once someone creates, edits, or removes an account, it'll show up here." class="m-4 border-0" />
+                    </td>
+                </tr>
+            @endforelse
+        </tbody>
+    </x-table>
 
-    <div class="users-header">
-        <div>
-            <p class="eyebrow">Administration</p>
-            <h1>Activity Log</h1>
-            <p class="users-subtitle">
-                A record of account changes across the app.
-            </p>
-        </div>
+    <div class="mt-4">
+        {{ $activity->links() }}
     </div>
 
-
-    <section class="user-group">
-
-        <div class="table-wrapper">
-
-            <table class="users-table">
-
-                <thead>
-                    <tr>
-                        <th>When</th>
-                        <th>Actor</th>
-                        <th>Action</th>
-                        <th>Subject</th>
-                        <th>Details</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                    @forelse($activity as $entry)
-
-                        <tr>
-
-                            <td class="email">
-                                {{ $entry->created_at->diffForHumans() }}
-                            </td>
-
-                            <td class="email">
-                                {{ $entry->causer?->name ?? 'System' }}
-                            </td>
-
-                            <td>
-                                <span class="activity-action">
-                                    {{ $entry->action }}
-                                </span>
-                            </td>
-
-                            <td class="email">
-                                {{ $entry->subject?->name ?? '—' }}
-                            </td>
-
-                            <td class="email">
-                                {{ $entry->description }}
-                            </td>
-
-                        </tr>
-
-                    @empty
-
-                        <tr>
-                            <td colspan="5" class="empty-state">
-                                No activity recorded yet.
-                            </td>
-                        </tr>
-
-                    @endforelse
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        <div class="pagination-wrapper">
-            {{ $activity->links() }}
-        </div>
-
-    </section>
-
-</div>
-
-</div>
+</main>
 
 @endsection

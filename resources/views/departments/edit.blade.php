@@ -4,109 +4,47 @@
 
 @section('content')
 
-<div class="dashboard-page">
+@include('partials.navbar')
 
-    @include('partials.navbar')
+<main class="mx-auto max-w-2xl px-4 py-8 sm:px-6">
 
+    <x-page-header
+        eyebrow="Organization"
+        title="Edit Department"
+        back="{{ route('departments.index') }}"
+        backLabel="Back to Departments"
+    />
 
-    <main class="user-page-container">
+    <x-card>
+        <h2 class="font-display text-lg font-semibold text-ink">Department Information</h2>
 
-        <div class="page-header">
+        @if ($errors->any())
+            <x-alert type="error" class="mt-4">
+                <ul class="list-disc space-y-1 pl-4">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </x-alert>
+        @endif
 
-            <div>
-                <p class="eyebrow">Organization</p>
+        <form method="POST" action="{{ route('departments.update', $department) }}" class="mt-6 flex flex-col gap-5">
+            @csrf
+            @method('PUT')
 
-                <h1>Edit Department</h1>
-            </div>
+            <x-field name="name" label="Department Name" value="{{ old('name', $department->name) }}" required />
 
-            <a href="{{ route('departments.index') }}" class="secondary-button">
-                ← Back to Departments
-            </a>
+            <x-field name="head_user_id" label="Department Head" as="select">
+                <option value="">No head assigned</option>
+                @foreach ($users as $user)
+                    <option value="{{ $user->id }}" @selected(old('head_user_id', $department->head_user_id) == $user->id)>{{ $user->name }}</option>
+                @endforeach
+            </x-field>
 
-        </div>
+            <x-button size="lg" class="w-full">Update Department</x-button>
+        </form>
+    </x-card>
 
-
-        <div class="form-card">
-
-            <div class="form-card-header">
-                <h2>Department Information</h2>
-            </div>
-
-            @if ($errors->any())
-
-                <div class="error-container">
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-
-            @endif
-
-            <form method="POST" action="{{ route('departments.update', $department) }}">
-
-                @csrf
-                @method('PUT')
-
-                <div class="form-group">
-
-                    <label for="name">
-                        Department Name
-                    </label>
-
-                    <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        value="{{ old('name', $department->name) }}"
-                        required
-                    >
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label for="head_user_id">
-                        Department Head
-                    </label>
-
-                    <select
-                        id="head_user_id"
-                        name="head_user_id"
-                    >
-
-                        <option value="">
-                            No head assigned
-                        </option>
-
-                        @foreach ($users as $user)
-
-                            <option
-                                value="{{ $user->id }}"
-                                {{ old('head_user_id', $department->head_user_id) == $user->id ? 'selected' : '' }}
-                            >
-                                {{ $user->name }}
-                            </option>
-
-                        @endforeach
-
-                    </select>
-
-                </div>
-
-
-                <button type="submit" class="auth-button">
-                    Update Department
-                </button>
-
-            </form>
-
-        </div>
-
-    </main>
-
-</div>
+</main>
 
 @endsection

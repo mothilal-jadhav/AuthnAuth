@@ -16,6 +16,8 @@ class PermissionSeeder extends Seeder
             'users.delete' => 'Users',
             'users.restore' => 'Users',
             'roles.assign' => 'Users',
+            'roles.view' => 'Users',
+            'permissions.view' => 'Users',
             'profile.view' => 'Profile',
             'activity.view' => 'Activity',
             'departments.view' => 'Departments',

@@ -2,17 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\CreateUser;
+use App\Actions\DeleteUser;
+use App\Actions\RestoreUser;
+use App\Actions\UpdateUser;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
-use App\Models\ActivityLog;
 use App\Models\Department;
 use App\Models\Role;
 use App\Models\User;
-use App\Notifications\EmailChangedNotification;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Str;
 
 class UserManagementController extends Controller
 {
@@ -43,28 +42,9 @@ class UserManagementController extends Controller
         return view('users.create', compact('roles', 'departments'));
     }
 
-    public function store(StoreUserRequest $request)
+    public function store(StoreUserRequest $request, CreateUser $createUser)
     {
-        $validated = $request->validated();
-
-        $temporaryPassword = Str::password(12);
-
-        $user = new User([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => $temporaryPassword,
-        ]);
-        $user->role_id = $validated['role_id'];
-        $user->department_id = $validated['department_id'] ?? null;
-        $user->must_change_password = true;
-        $user->save();
-
-        ActivityLog::record(
-            'user.created',
-            $user,
-            auth()->user()->name.' created this account.',
-            ['role' => $user->role->name]
-        );
+        ['user' => $user, 'temporary_password' => $temporaryPassword] = $createUser->execute($request->validated());
 
         return redirect()
             ->route('users.create')
@@ -87,77 +67,35 @@ class UserManagementController extends Controller
         return view('users.edit', compact('user', 'roles', 'departments', 'functionalRoles'));
     }
 
-    public function update(UpdateUserRequest $request, User $user)
+    public function update(UpdateUserRequest $request, User $user, UpdateUser $updateUser)
     {
         $validated = $request->validated();
 
         $this->authorize('assignRole', [User::class, (int) $validated['role_id']]);
 
-        $oldEmail = $user->email;
-
-        $user->fill([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-        ]);
-        $user->role_id = $validated['role_id'];
-        $user->department_id = $validated['department_id'] ?? null;
-        $user->save();
-
-        $changes = $user->getChanges();
-        unset($changes['updated_at']);
-
-        ActivityLog::record(
-            'user.updated',
-            $user,
-            auth()->user()->name.' updated this account.',
-            $changes
-        );
-
-        if (array_key_exists('email', $changes)) {
-            Notification::route('mail', array_unique([$oldEmail, $user->email]))
-                ->notify(new EmailChangedNotification($oldEmail, $user->email, auth()->user()->name));
-        }
-
         // Checkboxes submit nothing at all when every box is unchecked, so a
         // hidden marker field (not the checkbox array itself) is what tells
         // us this section of the form was actually submitted.
-        $functionalRolesSubmitted = $request->boolean('functional_role_ids_submitted');
+        $functionalRoleIds = null;
 
-        if ($functionalRolesSubmitted) {
+        if ($request->boolean('functional_role_ids_submitted')) {
             $this->authorize('assignFunctionalRoles', $user);
 
             $functionalRoleIds = $validated['functional_role_ids'] ?? [];
-
-            $user->functionalRoles()->sync($functionalRoleIds);
-
-            ActivityLog::record(
-                'user.functional_roles_updated',
-                $user,
-                auth()->user()->name.' updated this account\'s functional roles.',
-                ['functional_role_ids' => $functionalRoleIds]
-            );
         }
 
-        if (array_key_exists('role_id', $changes) || $functionalRolesSubmitted) {
-            Cache::forget("user:{$user->id}:permissions");
-        }
+        $updateUser->execute($user, $validated, $functionalRoleIds);
 
         return redirect()
             ->route('users.index')
             ->with('success', 'User updated successfully.');
     }
 
-    public function destroy(User $user)
+    public function destroy(User $user, DeleteUser $deleteUser)
     {
         $this->authorize('delete', $user);
 
-        $user->delete();
-
-        ActivityLog::record(
-            'user.deleted',
-            $user,
-            auth()->user()->name.' deleted this account.'
-        );
+        $deleteUser->execute($user);
 
         return redirect()
             ->route('users.index')
@@ -174,19 +112,13 @@ class UserManagementController extends Controller
         return view('users.trashed', compact('users'));
     }
 
-    public function restore(int $id)
+    public function restore(int $id, RestoreUser $restoreUser)
     {
         $user = User::onlyTrashed()->findOrFail($id);
 
         $this->authorize('restore', $user);
 
-        $user->restore();
-
-        ActivityLog::record(
-            'user.restored',
-            $user,
-            auth()->user()->name.' restored this account.'
-        );
+        $restoreUser->execute($user);
 
         return redirect()
             ->route('users.trashed')

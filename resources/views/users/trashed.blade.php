@@ -4,143 +4,81 @@
 
 @section('content')
 
-<div class="dashboard-page">
+@include('partials.navbar')
 
-    @include('partials.navbar')
+<main class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
 
+    <x-page-header
+        eyebrow="User Management"
+        title="Deleted Users"
+        subtitle="Deleted accounts, kept for restore. Nothing here is permanently removed."
+        back="{{ route('users.index') }}"
+        backLabel="Back to Users"
+    />
 
-<div class="users-page">
-
-    <a href="{{ route('users.index') }}" class="back-dashboard">
-        ← Back to Users
-    </a>
-
-    <div class="users-header">
-        <div>
-            <p class="eyebrow">User Management</p>
-            <h1>Deleted Users</h1>
-            <p class="users-subtitle">
-                Deleted accounts, kept for restore. Nothing here is
-                permanently removed.
-            </p>
-        </div>
-    </div>
-
-
-    {{-- Success Message --}}
-
-    @if(session('success'))
-        <div class="success-message">
-            {{ session('success') }}
-        </div>
+    @if (session('success'))
+        <x-alert type="success" class="mb-6">{{ session('success') }}</x-alert>
     @endif
 
+    <x-table>
+        <thead>
+            <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">User</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Email</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Role</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Deleted</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Actions</th>
+            </tr>
+        </thead>
 
-    <section class="user-group">
+        <tbody>
+            @forelse ($users as $user)
+                <tr class="border-t border-line hover:bg-paper-alt">
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-paper-alt font-display text-sm font-semibold text-ink-muted">
+                                {{ strtoupper(substr($user->name, 0, 1)) }}
+                            </div>
+                            <span class="font-medium text-ink">{{ $user->name }}</span>
+                        </div>
+                    </td>
 
-        <div class="table-wrapper">
+                    <td class="px-4 py-3 text-sm text-ink-muted">{{ $user->email }}</td>
 
-            <table class="users-table">
+                    <td class="px-4 py-3">
+                        <x-badge variant="brand">{{ strtoupper($user->role->name) }}</x-badge>
+                    </td>
 
-                <thead>
-                    <tr>
-                        <th>User</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th>Deleted</th>
-                        <th class="actions-column">Actions</th>
-                    </tr>
-                </thead>
+                    <td class="px-4 py-3 text-sm text-ink-muted">{{ $user->deleted_at->diffForHumans() }}</td>
 
-                <tbody>
+                    <td class="px-4 py-3">
+                        @can('restore', $user)
+                            <form method="POST" action="{{ route('users.restore', $user->id) }}" data-confirm="Restore this user's account?">
+                                @csrf
 
-                    @forelse($users as $user)
+                                <button type="submit" class="text-sm font-medium text-brand-600 hover:text-brand-700">
+                                    Restore
+                                </button>
+                            </form>
+                        @else
+                            <span class="text-sm text-ink-muted">View only</span>
+                        @endcan
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="5">
+                        <x-empty-state icon="🗂️" title="No deleted users" description="Anything removed from Users will show up here first." class="m-4 border-0" />
+                    </td>
+                </tr>
+            @endforelse
+        </tbody>
+    </x-table>
 
-                        <tr>
+    <div class="mt-4">
+        {{ $users->links() }}
+    </div>
 
-                            <td>
-                                <div class="user-cell">
-
-                                    <div class="avatar">
-                                        {{ strtoupper(substr($user->name, 0, 1)) }}
-                                    </div>
-
-                                    <div>
-                                        <strong>{{ $user->name }}</strong>
-                                    </div>
-
-                                </div>
-                            </td>
-
-                            <td class="email">
-                                {{ $user->email }}
-                            </td>
-
-                            <td>
-                                <span class="role-badge role-{{ $user->role->name }}">
-                                    {{ strtoupper($user->role->name) }}
-                                </span>
-                            </td>
-
-                            <td class="email">
-                                {{ $user->deleted_at->diffForHumans() }}
-                            </td>
-
-                            <td>
-
-                                @can('restore', $user)
-
-                                    <form
-                                        method="POST"
-                                        action="{{ route('users.restore', $user->id) }}"
-                                        data-confirm="Restore this user's account?"
-                                    >
-                                        @csrf
-
-                                        <button
-                                            type="submit"
-                                            class="restore-button"
-                                        >
-                                            Restore
-                                        </button>
-                                    </form>
-
-                                @else
-
-                                    <span class="view-only">
-                                        View only
-                                    </span>
-
-                                @endcan
-
-                            </td>
-
-                        </tr>
-
-                    @empty
-
-                        <tr>
-                            <td colspan="5" class="empty-state">
-                                No deleted users.
-                            </td>
-                        </tr>
-
-                    @endforelse
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        <div class="pagination-wrapper">
-            {{ $users->links() }}
-        </div>
-
-    </section>
-
-</div>
-
-</div>
+</main>
 
 @endsection

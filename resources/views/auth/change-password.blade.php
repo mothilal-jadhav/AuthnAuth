@@ -4,61 +4,27 @@
 
 @section('content')
 
-<div class="auth-container">
+<x-auth-shell title="Let's set a fresh password before you continue">
 
-    <div class="auth-card">
+    @if ($errors->any())
+        <x-alert type="error" class="mb-6">
+            <ul class="list-disc space-y-1 pl-4">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </x-alert>
+    @endif
 
-        <div class="logo">
-            <h1>AuthnAuth</h1>
-            <p>You must set a new password before continuing</p>
-        </div>
+    <form method="POST" action="{{ url('/password/change') }}" class="flex flex-col gap-5">
+        @csrf
 
-        @if ($errors->any())
-            <div class="error-container">
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+        <x-field name="password" label="New Password" type="password" required />
+        <x-field name="password_confirmation" label="Confirm New Password" type="password" required />
 
-        <form method="POST" action="{{ url('/password/change') }}">
+        <x-button size="lg" class="w-full">Set password</x-button>
+    </form>
 
-            @csrf
-
-            <div class="form-group">
-                <label for="password">New Password</label>
-
-                <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    required
-                >
-            </div>
-
-            <div class="form-group">
-                <label for="password_confirmation">
-                    Confirm New Password
-                </label>
-
-                <input
-                    type="password"
-                    id="password_confirmation"
-                    name="password_confirmation"
-                    required
-                >
-            </div>
-
-            <button type="submit" class="auth-button">
-                Set Password
-            </button>
-
-        </form>
-
-    </div>
-
-</div>
+</x-auth-shell>
 
 @endsection

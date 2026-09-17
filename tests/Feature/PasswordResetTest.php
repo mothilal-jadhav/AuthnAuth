@@ -71,6 +71,27 @@ class PasswordResetTest extends TestCase
         );
     }
 
+    public function test_password_reset_revokes_existing_api_tokens(): void
+    {
+        // Security review finding #1: this is the account-recovery path,
+        // most likely to be used specifically because the account is
+        // suspected compromised — a stolen API token must not survive it.
+        $user = $this->makeUser();
+        $user->createToken('stolen-token');
+        $this->assertSame(1, $user->tokens()->count());
+
+        $token = Password::createToken($user);
+
+        $this->post('/reset-password', [
+            'token' => $token,
+            'email' => $user->email,
+            'password' => 'NewPassw0rd!',
+            'password_confirmation' => 'NewPassw0rd!',
+        ]);
+
+        $this->assertSame(0, $user->tokens()->count());
+    }
+
     public function test_password_reset_fails_with_invalid_token(): void
     {
         $user = $this->makeUser();

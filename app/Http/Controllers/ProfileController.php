@@ -54,6 +54,11 @@ class ProfileController extends Controller
         $user->password = $validated['password'];
         $user->save();
 
+        // Security review finding #1: a password change must revoke any
+        // existing API tokens, otherwise a stolen token stays valid even
+        // after the account owner thinks they've secured their account.
+        $user->tokens()->delete();
+
         ActivityLog::record('user.password_changed', $user, "{$user->name} changed their own password.");
 
         $user->notify(new PasswordChangedNotification);

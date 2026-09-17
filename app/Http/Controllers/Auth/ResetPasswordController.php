@@ -49,6 +49,12 @@ class ResetPasswordController extends Controller
                     'remember_token' => Str::random(60),
                 ])->save();
 
+                // Security review finding #1: this is the account-recovery
+                // path, most likely to be used specifically because the
+                // account is suspected compromised — any existing API
+                // tokens must not survive it.
+                $user->tokens()->delete();
+
                 event(new PasswordReset($user));
             }
         );

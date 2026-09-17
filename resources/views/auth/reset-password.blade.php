@@ -4,79 +4,30 @@
 
 @section('content')
 
-<div class="auth-container">
+<x-auth-shell title="Choose a new password">
 
-    <div class="auth-card">
+    @if ($errors->any())
+        <x-alert type="error" class="mb-6">
+            <ul class="list-disc space-y-1 pl-4">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </x-alert>
+    @endif
 
-        <div class="logo">
-            <h1>AuthnAuth</h1>
-            <p>Choose a new password</p>
-        </div>
+    <form method="POST" action="{{ url('/reset-password') }}" class="flex flex-col gap-5">
+        @csrf
 
-        @if ($errors->any())
-            <div class="error-container">
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+        <input type="hidden" name="token" value="{{ $token }}">
 
-        <form method="POST" action="{{ url('/reset-password') }}">
+        <x-field name="email" label="Email" type="email" value="{{ old('email', $email) }}" required />
+        <x-field name="password" label="New Password" type="password" required />
+        <x-field name="password_confirmation" label="Confirm New Password" type="password" required />
 
-            @csrf
+        <x-button size="lg" class="w-full">Reset password</x-button>
+    </form>
 
-            <input
-                type="hidden"
-                name="token"
-                value="{{ $token }}"
-            >
-
-            <div class="form-group">
-                <label for="email">Email</label>
-
-                <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value="{{ old('email', $email) }}"
-                    required
-                >
-            </div>
-
-            <div class="form-group">
-                <label for="password">New Password</label>
-
-                <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    required
-                >
-            </div>
-
-            <div class="form-group">
-                <label for="password_confirmation">
-                    Confirm New Password
-                </label>
-
-                <input
-                    type="password"
-                    id="password_confirmation"
-                    name="password_confirmation"
-                    required
-                >
-            </div>
-
-            <button type="submit" class="auth-button">
-                Reset Password
-            </button>
-
-        </form>
-
-    </div>
-
-</div>
+</x-auth-shell>
 
 @endsection

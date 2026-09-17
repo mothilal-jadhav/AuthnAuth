@@ -9,14 +9,16 @@
 
     <title>@yield('title', 'AuthnAuth')</title>
 
-    <link rel="stylesheet" href="{{ asset('css/auth.css') }}">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="{{ asset('js/theme.js') }}" defer></script>
-    <script src="{{ asset('js/confirm.js') }}" defer></script>
 </head>
 
 <body>
 
     @yield('content')
+
+    <x-toast />
+    <x-confirm-dialog />
 
 </body>
 

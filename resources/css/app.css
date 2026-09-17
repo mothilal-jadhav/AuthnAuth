@@ -6,4 +6,110 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+
+    /* Brand: indigo, paired with a teal accent — a deliberate departure from the
+       stock Tailwind blue/gray this app used to hand-roll. */
+    --color-brand-50: #eef2ff;
+    --color-brand-100: #e0e7ff;
+    --color-brand-200: #c7d2fe;
+    --color-brand-300: #a5b4fc;
+    --color-brand-400: #818cf8;
+    --color-brand-500: #6366f1;
+    --color-brand-600: #4f46e5;
+    --color-brand-700: #4338ca;
+    --color-brand-800: #3730a3;
+    --color-brand-900: #312e81;
+
+    /* Fixed (not theme-swapped) — for solid, opaque surfaces like button fills
+       and the theme toggle, where white text needs guaranteed contrast in both
+       themes. brand-600/700 below are swapped in dark mode for on-surface text
+       legibility instead, which would wash out a solid fill. */
+    --color-brand-solid: #4f46e5;
+    --color-brand-solid-hover: #4338ca;
+
+    --color-accent-50: #f0fdfa;
+    --color-accent-100: #ccfbf1;
+    --color-accent-400: #2dd4bf;
+    --color-accent-500: #14b8a6;
+    --color-accent-600: #0d9488;
+    --color-accent-700: #0f766e;
+
+    /* Surfaces & text — swapped per-theme below, so components never need `dark:` classes. */
+    --color-paper: #ffffff;
+    --color-paper-alt: #f8fafc;
+    --color-ink: #1e1b2e;
+    --color-ink-muted: #6b7280;
+    --color-line: #e5e7eb;
+
+    /* Semantic status colors */
+    --color-success: #15803d;
+    --color-success-bg: #f0fdf4;
+    --color-success-line: #bbf7d0;
+    --color-danger: #b91c1c;
+    --color-danger-bg: #fef2f2;
+    --color-danger-line: #fecaca;
+    --color-warning: #b45309;
+    --color-warning-bg: #fffbeb;
+    --color-warning-line: #fde68a;
+    --color-info: #0369a1;
+    --color-info-bg: #f0f9ff;
+    --color-info-line: #bae6fd;
+
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1.25rem;
+    --radius-xl: 1.75rem;
+
+    --shadow-sm: 0 1px 2px 0 rgb(49 46 129 / 0.06);
+    --shadow-md: 0 6px 16px -4px rgb(49 46 129 / 0.14), 0 2px 6px -2px rgb(49 46 129 / 0.08);
+    --shadow-lg: 0 16px 40px -12px rgb(49 46 129 / 0.22);
+}
+
+:root[data-theme='dark'] {
+    --color-paper: #14121f;
+    --color-paper-alt: #1b1830;
+    --color-ink: #ede9f7;
+    --color-ink-muted: #a5a0bd;
+    --color-line: #2f2b47;
+
+    --color-brand-50: #1e1b3a;
+    --color-brand-100: #2a2650;
+    --color-brand-400: #a5b4fc;
+    --color-brand-500: #818cf8;
+    --color-brand-600: #a5b4fc;
+    --color-brand-700: #c7d2fe;
+
+    --color-accent-50: #0f2b28;
+    --color-accent-400: #5eead4;
+    --color-accent-500: #2dd4bf;
+    --color-accent-600: #5eead4;
+
+    --color-success: #4ade80;
+    --color-success-bg: #0f2b1a;
+    --color-success-line: #14532d;
+    --color-danger: #f87171;
+    --color-danger-bg: #2b1414;
+    --color-danger-line: #7f1d1d;
+    --color-warning: #fbbf24;
+    --color-warning-bg: #2b2110;
+    --color-warning-line: #78350f;
+    --color-info: #38bdf8;
+    --color-info-bg: #0c2333;
+    --color-info-line: #075985;
+
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-md: 0 6px 16px -4px rgb(0 0 0 / 0.45), 0 2px 6px -2px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 16px 40px -12px rgb(0 0 0 / 0.55);
+}
+
+body {
+    background-color: var(--color-paper-alt);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+    font-family: var(--font-display);
 }

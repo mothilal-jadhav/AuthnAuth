@@ -4,225 +4,127 @@
 
 @section('content')
 
-<div class="dashboard-page">
+@include('partials.navbar')
 
-    @include('partials.navbar')
+<main class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
 
-
-<div class="users-page">
-
-    <a href="{{ route('dashboard') }}" class="back-dashboard">
-        ← Back to Dashboard
-    </a>
-
-    <div class="users-header">
-        <div>
-            <p class="eyebrow">User Management</p>
-            <h1>Users</h1>
-            <p class="users-subtitle">
-                Manage users and their access levels.
-            </p>
-        </div>
-
-        <div class="header-actions">
-
-            @if(auth()->user()->hasPermission('users.restore'))
-                <a href="{{ route('users.trashed') }}" class="secondary-button">
-                    Deleted Users
-                </a>
+    <x-page-header
+        eyebrow="User Management"
+        title="Users"
+        subtitle="Manage users and their access levels."
+        back="{{ route('dashboard') }}"
+        backLabel="Back to Dashboard"
+    >
+        <x-slot:actions>
+            @if (auth()->user()->hasPermission('users.restore'))
+                <x-button :href="route('users.trashed')" variant="secondary" size="sm">Deleted Users</x-button>
             @endif
 
-            @if(auth()->user()->hasPermission('users.create'))
-                <a href="{{ route('users.create') }}" class="primary-button">
-                    <span>+</span>
-                    Create User
-                </a>
+            @if (auth()->user()->hasPermission('users.create'))
+                <x-button :href="route('users.create')" size="sm">+ Create User</x-button>
             @endif
+        </x-slot:actions>
+    </x-page-header>
 
-        </div>
+    <div class="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <x-stat label="Total Users" value="{{ $roleCounts->sum() }}" />
+        <x-stat label="Administrators" value="{{ $roleCounts->get('admin', 0) }}" />
+        <x-stat label="Managers" value="{{ $roleCounts->get('manager', 0) }}" />
+        <x-stat label="Users" value="{{ $roleCounts->get('user', 0) }}" />
     </div>
 
-
-    {{-- Statistics --}}
-
-    <div class="user-stats">
-
-        <div class="stat-card">
-            <span class="stat-label">Total Users</span>
-            <strong>{{ $roleCounts->sum() }}</strong>
-        </div>
-
-        <div class="stat-card">
-            <span class="stat-label">Administrators</span>
-            <strong>{{ $roleCounts->get('admin', 0) }}</strong>
-        </div>
-
-        <div class="stat-card">
-            <span class="stat-label">Managers</span>
-            <strong>{{ $roleCounts->get('manager', 0) }}</strong>
-        </div>
-
-        <div class="stat-card">
-            <span class="stat-label">Users</span>
-            <strong>{{ $roleCounts->get('user', 0) }}</strong>
-        </div>
-
-    </div>
-
-
-    {{-- Success Message --}}
-
-    @if(session('success'))
-        <div class="success-message">
-            {{ session('success') }}
-        </div>
+    @if (session('success'))
+        <x-alert type="success" class="mb-6">{{ session('success') }}</x-alert>
     @endif
 
-
-    {{-- Role filter --}}
-
-    <div class="role-filter">
-
+    <div class="mb-6 flex flex-wrap gap-2">
         <a
             href="{{ route('users.index') }}"
-            class="{{ request('role') ? '' : 'active' }}"
+            class="rounded-full px-3 py-1.5 text-sm font-medium transition {{ request('role') ? 'text-ink-muted hover:bg-paper-alt' : 'bg-brand-solid text-white' }}"
         >
             All
         </a>
 
-        @foreach(['admin' => 'Admins', 'manager' => 'Managers', 'user' => 'Users'] as $value => $label)
+        @foreach (['admin' => 'Admins', 'manager' => 'Managers', 'user' => 'Users'] as $value => $label)
             <a
                 href="{{ route('users.index', ['role' => $value]) }}"
-                class="{{ request('role') === $value ? 'active' : '' }}"
+                class="rounded-full px-3 py-1.5 text-sm font-medium transition {{ request('role') === $value ? 'bg-brand-solid text-white' : 'text-ink-muted hover:bg-paper-alt' }}"
             >
                 {{ $label }}
             </a>
         @endforeach
-
     </div>
 
+    <x-table>
+        <thead>
+            <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">User</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Email</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Role</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Department</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Actions</th>
+            </tr>
+        </thead>
 
-    <section class="user-group">
+        <tbody>
+            @forelse ($users as $user)
+                <tr class="border-t border-line hover:bg-paper-alt">
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 font-display text-sm font-semibold text-brand-700">
+                                {{ strtoupper(substr($user->name, 0, 1)) }}
+                            </div>
+                            <span class="font-medium text-ink">{{ $user->name }}</span>
+                        </div>
+                    </td>
 
-        <div class="table-wrapper">
+                    <td class="px-4 py-3 text-sm text-ink-muted">{{ $user->email }}</td>
 
-            <table class="users-table">
+                    <td class="px-4 py-3">
+                        <x-badge variant="brand">{{ strtoupper($user->role->name) }}</x-badge>
+                    </td>
 
-                <thead>
-                    <tr>
-                        <th>User</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th>Department</th>
-                        <th class="actions-column">Actions</th>
-                    </tr>
-                </thead>
+                    <td class="px-4 py-3 text-sm text-ink-muted">{{ $user->department->name ?? '—' }}</td>
 
-                <tbody>
+                    <td class="px-4 py-3">
+                        @canany(['update', 'delete'], $user)
+                            <div class="flex items-center gap-4">
+                                @can('update', $user)
+                                    <a href="{{ route('users.edit', $user) }}" class="text-sm font-medium text-brand-600 hover:text-brand-700">
+                                        Edit
+                                    </a>
+                                @endcan
 
-                    @forelse($users as $user)
+                                @can('delete', $user)
+                                    <form method="POST" action="{{ route('users.destroy', $user) }}" data-confirm="Are you sure you want to delete this user?">
+                                        @csrf
+                                        @method('DELETE')
 
-                        <tr>
+                                        <button type="submit" class="text-sm font-medium text-danger hover:opacity-80">
+                                            Delete
+                                        </button>
+                                    </form>
+                                @endcan
+                            </div>
+                        @else
+                            <span class="text-sm text-ink-muted">View only</span>
+                        @endcanany
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="5">
+                        <x-empty-state icon="👥" title="No users found" description="Try a different filter, or create the first account." class="m-4 border-0" />
+                    </td>
+                </tr>
+            @endforelse
+        </tbody>
+    </x-table>
 
-                            <td>
-                                <div class="user-cell">
+    <div class="mt-4">
+        {{ $users->links() }}
+    </div>
 
-                                    <div class="avatar">
-                                        {{ strtoupper(substr($user->name, 0, 1)) }}
-                                    </div>
-
-                                    <div>
-                                        <strong>{{ $user->name }}</strong>
-                                    </div>
-
-                                </div>
-                            </td>
-
-                            <td class="email">
-                                {{ $user->email }}
-                            </td>
-
-                            <td>
-                                <span class="role-badge role-{{ $user->role->name }}">
-                                    {{ strtoupper($user->role->name) }}
-                                </span>
-                            </td>
-
-                            <td>
-                                {{ $user->department->name ?? '—' }}
-                            </td>
-
-                            <td>
-
-                                @canany(['update', 'delete'], $user)
-
-                                    <div class="user-actions">
-
-                                        @can('update', $user)
-                                            <a
-                                                href="{{ route('users.edit', $user) }}"
-                                                class="edit-button"
-                                            >
-                                                Edit
-                                            </a>
-                                        @endcan
-
-                                        @can('delete', $user)
-                                            <form
-                                                method="POST"
-                                                action="{{ route('users.destroy', $user) }}"
-                                                data-confirm="Are you sure you want to delete this user?"
-                                            >
-                                                @csrf
-                                                @method('DELETE')
-
-                                                <button
-                                                    type="submit"
-                                                    class="delete-button"
-                                                >
-                                                    Delete
-                                                </button>
-                                            </form>
-                                        @endcan
-
-                                    </div>
-
-                                @else
-
-                                    <span class="view-only">
-                                        View only
-                                    </span>
-
-                                @endcanany
-
-                            </td>
-
-                        </tr>
-
-                    @empty
-
-                        <tr>
-                            <td colspan="5" class="empty-state">
-                                No users found.
-                            </td>
-                        </tr>
-
-                    @endforelse
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        <div class="pagination-wrapper">
-            {{ $users->links() }}
-        </div>
-
-    </section>
-
-</div>
-
-</div>
+</main>
 
 @endsection

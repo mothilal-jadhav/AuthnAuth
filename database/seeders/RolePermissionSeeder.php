@@ -26,6 +26,8 @@ class RolePermissionSeeder extends Seeder
                 'profile.view',
                 'departments.view',
                 'roles.assign',
+                'roles.view',
+                'permissions.view',
             ])->pluck('id')
         );
 

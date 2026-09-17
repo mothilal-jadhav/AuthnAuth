@@ -8,26 +8,21 @@
 
     <script src="{{ asset('js/theme-init.js') }}"></script>
 
-    <link rel="stylesheet" href="{{ asset('css/auth.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/welcome.css') }}">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
 <body>
 
-    <div class="container">
+    <div class="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-brand-50 to-paper-alt px-4 text-center">
 
-        <h1>AuthnAuth</h1>
+        <h1 class="font-display text-4xl font-bold text-ink sm:text-5xl">AuthnAuth</h1>
 
-        <p>
-            Authentication & Authorization System
+        <p class="mt-3 max-w-md text-base text-ink-muted">
+            Authentication &amp; authorization for your team, without the noise.
         </p>
 
-        <div class="buttons">
-
-            <a href="/login" class="btn login">
-                Login
-            </a>
-
+        <div class="mt-8">
+            <x-button :href="url('/login')" size="lg">Login</x-button>
         </div>
 
     </div>

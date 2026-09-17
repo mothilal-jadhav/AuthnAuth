@@ -4,33 +4,18 @@
 
 @section('content')
 
-<div class="auth-container">
+<x-auth-shell title="Welcome, {{ auth()->user()->name }}">
 
-    <div class="auth-card">
+    <p class="text-sm text-ink-muted">
+        Your role: <strong class="font-semibold text-ink">{{ auth()->user()->role }}</strong>
+    </p>
 
-        <div class="logo">
-            <h1>Admin Dashboard</h1>
+    <form method="POST" action="{{ url('/logout') }}" class="mt-6">
+        @csrf
 
-            <p>
-                Welcome, {{ auth()->user()->name }}
-            </p>
-        </div>
+        <x-button size="lg" class="w-full">Logout</x-button>
+    </form>
 
-        <p>
-            Your role:
-            <strong>{{ auth()->user()->role }}</strong>
-        </p>
-
-        <form method="POST" action="{{ url('/logout') }}">
-            @csrf
-
-            <button type="submit" class="auth-button">
-                Logout
-            </button>
-        </form>
-
-    </div>
-
-</div>
+</x-auth-shell>
 
 @endsection

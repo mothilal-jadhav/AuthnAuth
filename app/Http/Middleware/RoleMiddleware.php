@@ -14,11 +14,11 @@ class RoleMiddleware
         string $role
     ): Response {
         if (! $request->user()) {
-            abort(401);
+            abort(401, 'Unauthenticated.');
         }
 
         if (! $request->user()->hasRole($role)) {
-            abort(403);
+            abort(403, 'This action is unauthorized.');
         }
 
         return $next($request);

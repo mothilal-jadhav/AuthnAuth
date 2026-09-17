@@ -14,11 +14,11 @@ class PermissionMiddleware
         string $permission
     ): Response {
         if (! $request->user()) {
-            abort(401);
+            abort(401, 'Unauthenticated.');
         }
 
         if (! $request->user()->hasPermission($permission)) {
-            abort(403);
+            abort(403, 'This action is unauthorized.');
         }
 
         return $next($request);

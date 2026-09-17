@@ -4,144 +4,80 @@
 
 @section('content')
 
-<div class="dashboard-page">
+@include('partials.navbar')
 
-    @include('partials.navbar')
+<main class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
 
+    <x-page-header
+        eyebrow="Organization"
+        title="Departments"
+        subtitle="Manage departments and their heads."
+        back="{{ route('dashboard') }}"
+        backLabel="Back to Dashboard"
+    >
+        <x-slot:actions>
+            @if (auth()->user()->hasPermission('departments.create'))
+                <x-button :href="route('departments.create')" size="sm">+ Create Department</x-button>
+            @endif
+        </x-slot:actions>
+    </x-page-header>
 
-    <main class="user-page-container">
+    @if (session('success'))
+        <x-alert type="success" class="mb-6">{{ session('success') }}</x-alert>
+    @endif
 
-        <div class="page-header">
+    <x-table>
+        <thead>
+            <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Department</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Head</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Users</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Actions</th>
+            </tr>
+        </thead>
 
-            <div>
-                <p class="eyebrow">Organization</p>
+        <tbody>
+            @forelse ($departments as $department)
+                <tr class="border-t border-line hover:bg-paper-alt">
+                    <td class="px-4 py-3 font-medium text-ink">{{ $department->name }}</td>
+                    <td class="px-4 py-3 text-sm text-ink-muted">{{ $department->head->name ?? '—' }}</td>
+                    <td class="px-4 py-3 text-sm text-ink-muted">{{ $department->users_count }}</td>
 
-                <h1>Departments</h1>
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-4">
+                            @if (auth()->user()->hasPermission('departments.update'))
+                                <a href="{{ route('departments.edit', $department) }}" class="text-sm font-medium text-brand-600 hover:text-brand-700">
+                                    Edit
+                                </a>
+                            @endif
 
-                <p>
-                    Manage departments and their heads.
-                </p>
-            </div>
+                            @if (auth()->user()->hasPermission('departments.delete'))
+                                <form method="POST" action="{{ route('departments.destroy', $department) }}" data-confirm="Are you sure you want to delete this department?">
+                                    @csrf
+                                    @method('DELETE')
 
-            <div class="header-actions">
+                                    <button type="submit" class="text-sm font-medium text-danger hover:opacity-80">
+                                        Delete
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="4">
+                        <x-empty-state icon="🏢" title="No departments found" description="Create your first department to start organizing users." class="m-4 border-0" />
+                    </td>
+                </tr>
+            @endforelse
+        </tbody>
+    </x-table>
 
-                <a href="{{ route('dashboard') }}" class="secondary-button">
-                    ← Back to Dashboard
-                </a>
+    <div class="mt-4">
+        {{ $departments->links() }}
+    </div>
 
-                @if(auth()->user()->hasPermission('departments.create'))
-                    <a href="{{ route('departments.create') }}" class="primary-button">
-                        <span>+</span>
-                        Create Department
-                    </a>
-                @endif
-
-            </div>
-
-        </div>
-
-
-        @if(session('success'))
-            <div class="success-message">
-                {{ session('success') }}
-            </div>
-        @endif
-
-
-        <section class="user-group">
-
-            <div class="table-wrapper">
-
-                <table class="users-table">
-
-                    <thead>
-                        <tr>
-                            <th>Department</th>
-                            <th>Head</th>
-                            <th>Users</th>
-                            <th class="actions-column">Actions</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-
-                        @forelse($departments as $department)
-
-                            <tr>
-
-                                <td>
-                                    <strong>{{ $department->name }}</strong>
-                                </td>
-
-                                <td>
-                                    {{ $department->head->name ?? '—' }}
-                                </td>
-
-                                <td>
-                                    {{ $department->users_count }}
-                                </td>
-
-                                <td>
-
-                                    <div class="user-actions">
-
-                                        @if(auth()->user()->hasPermission('departments.update'))
-                                            <a
-                                                href="{{ route('departments.edit', $department) }}"
-                                                class="edit-button"
-                                            >
-                                                Edit
-                                            </a>
-                                        @endif
-
-                                        @if(auth()->user()->hasPermission('departments.delete'))
-                                            <form
-                                                method="POST"
-                                                action="{{ route('departments.destroy', $department) }}"
-                                                data-confirm="Are you sure you want to delete this department?"
-                                            >
-                                                @csrf
-                                                @method('DELETE')
-
-                                                <button
-                                                    type="submit"
-                                                    class="delete-button"
-                                                >
-                                                    Delete
-                                                </button>
-                                            </form>
-                                        @endif
-
-                                    </div>
-
-                                </td>
-
-                            </tr>
-
-                        @empty
-
-                            <tr>
-                                <td colspan="4" class="empty-state">
-                                    No departments found.
-                                </td>
-                            </tr>
-
-                        @endforelse
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-            <div class="pagination-wrapper">
-                {{ $departments->links() }}
-            </div>
-
-        </section>
-
-    </main>
-
-</div>
+</main>
 
 @endsection

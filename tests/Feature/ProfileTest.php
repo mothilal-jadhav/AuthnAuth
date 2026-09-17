@@ -164,6 +164,24 @@ class ProfileTest extends TestCase
         ]);
     }
 
+    public function test_self_service_password_change_revokes_existing_api_tokens(): void
+    {
+        // Security review finding #1: a stolen API token must not survive
+        // a password change.
+        $user = $this->makeUser(['password' => 'OldPass123!']);
+        $user->createToken('stolen-token');
+
+        $this->assertSame(1, $user->tokens()->count());
+
+        $this->actingAs($user)->put('/profile/password', [
+            'current_password' => 'OldPass123!',
+            'password' => 'NewPass456!',
+            'password_confirmation' => 'NewPass456!',
+        ]);
+
+        $this->assertSame(0, $user->tokens()->count());
+    }
+
     public function test_wrong_current_password_is_rejected(): void
     {
         Notification::fake();

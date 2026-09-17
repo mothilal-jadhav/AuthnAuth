@@ -4,61 +4,42 @@
 
 @section('content')
 
-<div class="auth-container">
+<x-auth-shell title="Let's get you a new link">
 
-    <div class="auth-card">
+    @if (session('status'))
+        <x-alert type="success" class="mb-6">{{ session('status') }}</x-alert>
+    @endif
 
-        <div class="logo">
-            <h1>AuthnAuth</h1>
-            <p>Reset your password</p>
-        </div>
+    @if ($errors->any())
+        <x-alert type="error" class="mb-6">
+            <ul class="list-disc space-y-1 pl-4">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </x-alert>
+    @endif
 
-        @if (session('status'))
-            <div class="success-container">
-                {{ session('status') }}
-            </div>
-        @endif
+    <form method="POST" action="{{ url('/forgot-password') }}" class="flex flex-col gap-5">
+        @csrf
 
-        @if ($errors->any())
-            <div class="error-container">
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+        <x-field
+            name="email"
+            label="Email"
+            type="email"
+            value="{{ old('email') }}"
+            required
+            autofocus
+            hint="We'll send a reset link to this address."
+        />
 
-        <form method="POST" action="{{ url('/forgot-password') }}">
+        <x-button size="lg" class="w-full">Send reset link</x-button>
+    </form>
 
-            @csrf
+    <x-slot:footer>
+        Remember your password? <a href="{{ url('/login') }}" class="font-medium text-brand-600 hover:text-brand-700">Login</a>
+    </x-slot:footer>
 
-            <div class="form-group">
-                <label for="email">Email</label>
-
-                <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value="{{ old('email') }}"
-                    required
-                    autofocus
-                >
-            </div>
-
-            <button type="submit" class="auth-button">
-                Send Reset Link
-            </button>
-
-        </form>
-
-        <div class="auth-footer">
-            Remember your password?
-            <a href="{{ url('/login') }}">Login</a>
-        </div>
-
-    </div>
-
-</div>
+</x-auth-shell>
 
 @endsection

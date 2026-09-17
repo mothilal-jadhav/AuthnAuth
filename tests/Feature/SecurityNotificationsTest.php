@@ -42,6 +42,24 @@ class SecurityNotificationsTest extends TestCase
         Notification::assertSentTo($user, PasswordChangedNotification::class);
     }
 
+    public function test_forced_password_change_revokes_existing_api_tokens(): void
+    {
+        // Security review finding #1: a stolen API token must not survive
+        // a password change.
+        $role = Role::firstOrCreate(['name' => 'user'], ['level' => 10]);
+        $user = User::factory()->create(['role_id' => $role->id]);
+        $user->createToken('stolen-token');
+
+        $this->assertSame(1, $user->tokens()->count());
+
+        $this->actingAs($user)->post('/password/change', [
+            'password' => 'NewPass123!',
+            'password_confirmation' => 'NewPass123!',
+        ]);
+
+        $this->assertSame(0, $user->tokens()->count());
+    }
+
     public function test_admin_changing_a_users_email_notifies_old_and_new_address(): void
     {
         Notification::fake();

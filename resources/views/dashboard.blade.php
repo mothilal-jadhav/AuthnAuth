@@ -4,236 +4,59 @@
 
 @section('content')
 
-<div class="dashboard-page">
-
-    @include('partials.navbar')
-
-
-    <main class="dashboard-container">
-
-        <section class="welcome-section">
-
-            <div>
-
-                <p class="eyebrow">
-                    Dashboard
-                </p>
-
-                <h1>
-                    Welcome, {{ auth()->user()->name }}
-                </h1>
-
-                <p class="welcome-text">
-                    Manage your account and access available resources.
-                </p>
-
-            </div>
-
-            <div class="role-badge">
-                {{ strtoupper(auth()->user()->role->name) }}
-            </div>
-
-        </section>
-
-
-        <section class="stats-grid">
-
-            <div class="stat-card">
-
-                <span class="stat-label">
-                    Account
-                </span>
-
-                <strong>
-                    Active
-                </strong>
-
-                <small>
-                    Authenticated user
-                </small>
-
-            </div>
-
-
-            <div class="stat-card">
-
-                <span class="stat-label">
-                    Role
-                </span>
-
-                <strong>
-                    {{ ucfirst(auth()->user()->role->name) }}
-                </strong>
-
-                <small>
-                    Assigned access level
-                </small>
-
-            </div>
-
-
-            <div class="stat-card">
-
-                <span class="stat-label">
-                    Access
-                </span>
-
-                <strong>
-                    {{ auth()->user()->role->permissions->count() }}
-                </strong>
-
-                <small>
-                    Available actions
-                </small>
-
-            </div>
-
-        </section>
-
-
-        <section class="dashboard-card">
-
-            <div class="card-header">
-
-                <div>
-
-                    <h2>
-                        Available Actions
-                    </h2>
-
-                    <p>
-                        Actions available to your account.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <div class="action-grid">
-
-
-                {{-- View Users --}}
-
-                @if(auth()->user()->hasPermission('users.view'))
-
-                    <a href="{{ route('users.index') }}" class="action-card">
-
-                        <div class="action-icon">
-                            👁
-                        </div>
-
-                        <div>
-                            <h3>View Users</h3>
-
-                            <p>
-                                View users you are authorized to access.
-                            </p>
-                        </div>
-
-                    </a>
-
-                @endif
-
-
-                @if(auth()->user()->hasPermission('users.create'))
-
-                    <a href="{{ route('users.create') }}" class="action-card">
-
-                        <div class="action-icon">
-                            +
-                        </div>
-
-                        <div>
-                            <h3>Create User</h3>
-
-                            <p>
-                                Create a new user account.
-                            </p>
-                        </div>
-
-                    </a>
-
-                @endif
-
-
-                @if(auth()->user()->hasPermission('activity.view'))
-
-                    <a href="{{ route('activity.index') }}" class="action-card">
-
-                        <div class="action-icon">
-                            🕘
-                        </div>
-
-                        <div>
-                            <h3>Activity Log</h3>
-
-                            <p>
-                                Review recent account changes.
-                            </p>
-                        </div>
-
-                    </a>
-
-                @endif
-
-
-                @if(auth()->user()->hasPermission('departments.view'))
-
-                    <a href="{{ route('departments.index') }}" class="action-card">
-
-                        <div class="action-icon">
-                            🏢
-                        </div>
-
-                        <div>
-                            <h3>Departments</h3>
-
-                            <p>
-                                Manage departments and their heads.
-                            </p>
-                        </div>
-
-                    </a>
-
-                @endif
-
-
-                {{-- My Profile --}}
-
-                @if (auth()->user()->hasPermission('profile.view'))
-
-                    <a
-                        href="{{ route('profile') }}" class="action-card"
-                    >
-
-                        <div class="nav-avatar">
-                            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                        </div>
-
-                        <div>
-
-                            <h3>
-                                My Profile
-                            </h3>
-
-                            <p>
-                                View your account information.
-                            </p>
-
-                        </div>
-
-                    </a>
-
-                @endif
-
-
-            </div>
-
-        </section>
-
-    </main>
-
-</div>
+@include('partials.navbar')
+
+@php
+    $quickActions = collect([
+        ['permission' => 'users.view', 'href' => route('users.index'), 'icon' => '👁', 'title' => 'View Users', 'description' => 'View users you are authorized to access.'],
+        ['permission' => 'users.create', 'href' => route('users.create'), 'icon' => '➕', 'title' => 'Create User', 'description' => 'Create a new user account.'],
+        ['permission' => 'activity.view', 'href' => route('activity.index'), 'icon' => '🕘', 'title' => 'Activity Log', 'description' => 'Review recent account changes.'],
+        ['permission' => 'departments.view', 'href' => route('departments.index'), 'icon' => '🏢', 'title' => 'Departments', 'description' => 'Manage departments and their heads.'],
+        ['permission' => 'profile.view', 'href' => route('profile'), 'icon' => strtoupper(substr(auth()->user()->name, 0, 1)), 'title' => 'My Profile', 'description' => 'View your account information.'],
+    ])->filter(fn ($action) => auth()->user()->hasPermission($action['permission']));
+@endphp
+
+<main class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+
+    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-brand-600">Dashboard</p>
+            <h1 class="font-display text-2xl font-bold text-ink">Welcome, {{ auth()->user()->name }}</h1>
+            <p class="mt-1 text-sm text-ink-muted">Manage your account and access available resources.</p>
+        </div>
+
+        <x-badge variant="brand" class="text-sm">{{ strtoupper(auth()->user()->role->name) }}</x-badge>
+    </div>
+
+    <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <x-stat label="Account" value="Active" hint="Authenticated user" />
+        <x-stat label="Role" value="{{ ucfirst(auth()->user()->role->name) }}" hint="Assigned access level" />
+        <x-stat label="Access" value="{{ auth()->user()->role->permissions->count() }}" hint="Available actions" />
+    </div>
+
+    <section>
+        <h2 class="font-display text-lg font-semibold text-ink">Available Actions</h2>
+        <p class="mt-1 text-sm text-ink-muted">Actions available to your account.</p>
+
+        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            @foreach ($quickActions as $action)
+                <a
+                    href="{{ $action['href'] }}"
+                    class="group flex items-start gap-4 rounded-lg border border-line bg-paper p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                >
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-lg text-brand-700">
+                        {{ $action['icon'] }}
+                    </div>
+
+                    <div>
+                        <h3 class="font-display font-semibold text-ink group-hover:text-brand-700">{{ $action['title'] }}</h3>
+                        <p class="mt-0.5 text-sm text-ink-muted">{{ $action['description'] }}</p>
+                    </div>
+                </a>
+            @endforeach
+        </div>
+    </section>
+
+</main>
 
 @endsection

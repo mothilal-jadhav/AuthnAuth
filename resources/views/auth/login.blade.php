@@ -4,70 +4,34 @@
 
 @section('content')
 
-<div class="auth-container">
+<x-auth-shell title="Good to see you again">
 
-    <div class="auth-card">
+    @if ($errors->any())
+        <x-alert type="error" class="mb-6">
+            <ul class="list-disc space-y-1 pl-4">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </x-alert>
+    @endif
 
-        <div class="logo">
-            <h1>AuthnAuth</h1>
-            <p>Sign in to your account</p>
+    <form method="POST" action="{{ url('/login') }}" class="flex flex-col gap-5">
+        @csrf
+
+        <x-field name="email" label="Email" type="email" value="{{ old('email') }}" required autofocus />
+
+        <div class="flex flex-col gap-1.5">
+            <x-field name="password" label="Password" type="password" required />
+
+            <a href="{{ url('/forgot-password') }}" class="self-end text-sm font-medium text-brand-600 hover:text-brand-700">
+                Forgot your password?
+            </a>
         </div>
 
-        @if ($errors->any())
-            <div class="error-container">
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+        <x-button size="lg" class="w-full">Sign in</x-button>
+    </form>
 
-        <form method="POST" action="{{ url('/login') }}">
-
-            @csrf
-
-            <div class="form-group">
-                <label for="email">Email</label>
-
-                <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value="{{ old('email') }}"
-                    required
-                    autofocus
-                >
-
-            </div>
-
-            <div class="form-group">
-                <label for="password">Password</label>
-
-                <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    required
-                >
-                <br>
-                
-
-                <div class="auth-footer" style="margin-top: 10px; margin-bottom: 20px;">
-                    <a href="{{ url('/forgot-password') }}">
-                        Forgot your password?
-                    </a>
-                </div>
-            </div>
-
-            <button type="submit" class="auth-button">
-                Login
-            </button>
-
-        </form>
-
-    </div>
-
-</div>
+</x-auth-shell>
 
 @endsection

@@ -32,5 +32,11 @@ class AppServiceProvider extends ServiceProvider
         // route using it would share one combined bucket per IP.
         RateLimiter::for('login', fn (Request $request) => Limit::perMinute(6)->by($request->ip()));
         RateLimiter::for('password-reset', fn (Request $request) => Limit::perMinute(6)->by($request->ip()));
+        RateLimiter::for('api-login', fn (Request $request) => Limit::perMinute(6)->by($request->ip()));
+
+        // Default limiter for the api middleware group (routes/api.php).
+        // Individual endpoints (e.g. API login) get their own, stricter
+        // named limiter where warranted, same pattern as `login` above.
+        RateLimiter::for('api', fn (Request $request) => Limit::perMinute(60)->by($request->user()?->id ?: $request->ip()));
     }
 }

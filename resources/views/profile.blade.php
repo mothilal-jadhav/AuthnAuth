@@ -4,229 +4,98 @@
 
 @section('content')
 
-<div class="dashboard-page">
+@include('partials.navbar')
 
-    @include('partials.navbar')
+<main class="mx-auto max-w-2xl px-4 py-8 sm:px-6">
 
+    <x-page-header
+        eyebrow="Account"
+        title="My Profile"
+        subtitle="View and update your personal account information."
+        back="{{ route('dashboard') }}"
+        backLabel="Back to Dashboard"
+    />
 
-<div class="profile-page">
-
-    <a href="{{ route('dashboard') }}" class="back-dashboard">
-        ← Back to Dashboard
-    </a>
-
-    <div class="profile-header">
-        <div>
-            <p class="eyebrow">Account</p>
-            <h1>My Profile</h1>
-            <p class="profile-subtitle">
-                View and update your personal account information.
-            </p>
-        </div>
-    </div>
-
-
-    {{-- Success Message --}}
-
-    @if(session('success'))
-        <div class="success-message">
-            {{ session('success') }}
-        </div>
+    @if (session('success'))
+        <x-alert type="success" class="mb-6">{{ session('success') }}</x-alert>
     @endif
 
-
-    <section class="profile-card">
-
-        <div class="profile-card-header">
-
-            <div class="profile-avatar">
+    <x-card class="mb-6">
+        <div class="flex items-center gap-4">
+            <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-100 font-display text-xl font-semibold text-brand-700">
                 {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
             </div>
 
             <div>
-                <h2>{{ auth()->user()->name }}</h2>
-
-                <p>
-                    {{ auth()->user()->email }}
-                </p>
+                <h2 class="font-display text-lg font-semibold text-ink">{{ auth()->user()->name }}</h2>
+                <p class="text-sm text-ink-muted">{{ auth()->user()->email }}</p>
             </div>
-
         </div>
 
-
-        <div class="profile-divider"></div>
-
-
-        <div class="profile-details">
-
-            <div class="profile-detail">
-
-                <span class="detail-label">
-                    Role
-                </span>
-
-                <span class="role-badge role-{{ auth()->user()->role->name }}">
-                    {{ strtoupper(auth()->user()->role->name) }}
-                </span>
-
+        <div class="mt-6 flex flex-wrap items-center gap-6 border-t border-line pt-4">
+            <div>
+                <p class="text-xs font-medium uppercase tracking-wide text-ink-muted">Role</p>
+                <x-badge variant="brand" class="mt-1">{{ strtoupper(auth()->user()->role->name) }}</x-badge>
             </div>
 
-
-            <div class="profile-detail">
-
-                <span class="detail-label">
-                    Account Status
-                </span>
-
-                <span class="status-badge">
-                    Active
-                </span>
-
+            <div>
+                <p class="text-xs font-medium uppercase tracking-wide text-ink-muted">Account Status</p>
+                <x-badge variant="success" class="mt-1">Active</x-badge>
             </div>
-
         </div>
+    </x-card>
 
-    </section>
-
-
-    {{-- Profile Information --}}
-
-    <div class="form-card">
-
-        <div class="form-card-header">
-            <h2>Profile Information</h2>
-
-            <p>
-                Update your name and email address.
-            </p>
-        </div>
+    <x-card class="mb-6">
+        <h2 class="font-display text-lg font-semibold text-ink">Profile Information</h2>
+        <p class="mt-1 text-sm text-ink-muted">Update your name and email address.</p>
 
         @if ($errors->updateProfile->any())
-
-            <div class="error-container">
-
-                <ul>
+            <x-alert type="error" class="mt-4">
+                <ul class="list-disc space-y-1 pl-4">
                     @foreach ($errors->updateProfile->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
-
-            </div>
-
+            </x-alert>
         @endif
 
-        <form method="POST" action="{{ route('profile.update') }}">
-
+        <form method="POST" action="{{ route('profile.update') }}" class="mt-6 flex flex-col gap-5">
             @csrf
             @method('PUT')
 
-            <div class="form-group">
-                <label for="name">Full Name</label>
+            <x-field name="name" label="Full Name" value="{{ old('name', auth()->user()->name) }}" required />
+            <x-field name="email" label="Email Address" type="email" value="{{ old('email', auth()->user()->email) }}" required />
 
-                <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value="{{ old('name', auth()->user()->name) }}"
-                    required
-                >
-            </div>
-
-            <div class="form-group">
-                <label for="email">Email Address</label>
-
-                <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value="{{ old('email', auth()->user()->email) }}"
-                    required
-                >
-            </div>
-
-            <button type="submit" class="auth-button">
-                Save Changes
-            </button>
-
+            <x-button size="lg" class="w-full">Save Changes</x-button>
         </form>
+    </x-card>
 
-    </div>
-
-
-    {{-- Change Password --}}
-
-    <div class="form-card">
-
-        <div class="form-card-header">
-            <h2>Change Password</h2>
-
-            <p>
-                Update your password. You'll need to enter your current one.
-            </p>
-        </div>
+    <x-card>
+        <h2 class="font-display text-lg font-semibold text-ink">Change Password</h2>
+        <p class="mt-1 text-sm text-ink-muted">Update your password. You'll need to enter your current one.</p>
 
         @if ($errors->updatePassword->any())
-
-            <div class="error-container">
-
-                <ul>
+            <x-alert type="error" class="mt-4">
+                <ul class="list-disc space-y-1 pl-4">
                     @foreach ($errors->updatePassword->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
-
-            </div>
-
+            </x-alert>
         @endif
 
-        <form method="POST" action="{{ route('profile.password.update') }}">
-
+        <form method="POST" action="{{ route('profile.password.update') }}" class="mt-6 flex flex-col gap-5">
             @csrf
             @method('PUT')
 
-            <div class="form-group">
-                <label for="current_password">Current Password</label>
+            <x-field name="current_password" label="Current Password" type="password" required />
+            <x-field name="password" label="New Password" type="password" required />
+            <x-field name="password_confirmation" label="Confirm New Password" type="password" required />
 
-                <input
-                    type="password"
-                    id="current_password"
-                    name="current_password"
-                    required
-                >
-            </div>
-
-            <div class="form-group">
-                <label for="password">New Password</label>
-
-                <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    required
-                >
-            </div>
-
-            <div class="form-group">
-                <label for="password_confirmation">Confirm New Password</label>
-
-                <input
-                    type="password"
-                    id="password_confirmation"
-                    name="password_confirmation"
-                    required
-                >
-            </div>
-
-            <button type="submit" class="auth-button">
-                Update Password
-            </button>
-
+            <x-button size="lg" class="w-full">Update Password</x-button>
         </form>
+    </x-card>
 
-    </div>
-
-</div>
-
-</div>
+</main>
 
 @endsection
