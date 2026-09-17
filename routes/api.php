@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\DepartmentController;
 use App\Http\Controllers\Api\V1\PermissionController;
 use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\UserController;
@@ -67,5 +68,17 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('/permissions/{permission}', [PermissionController::class, 'show'])
             ->middleware('permission:permissions.view')
             ->name('permissions.show');
+
+        Route::get('/departments', [DepartmentController::class, 'index'])
+            ->middleware('permission:departments.view')
+            ->name('departments.index');
+
+        Route::get('/departments/{department}', [DepartmentController::class, 'show'])
+            ->middleware('permission:departments.view')
+            ->name('departments.show');
+
+        Route::get('/departments/{department}/users', [DepartmentController::class, 'users'])
+            ->middleware('permission:departments.view')
+            ->name('departments.users');
     });
 });

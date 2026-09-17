@@ -50,6 +50,42 @@ class DepartmentManagementTest extends TestCase
         $response->assertStatus(403);
     }
 
+    public function test_user_with_departments_view_permission_can_view_department_show_page(): void
+    {
+        $actor = $this->actorWithPermissions(['departments.view']);
+        $department = Department::create(['name' => 'Engineering']);
+
+        $userRole = Role::create(['name' => 'user', 'type' => 'hierarchy', 'level' => 10]);
+        $member = User::factory()->create(['role_id' => $userRole->id, 'department_id' => $department->id]);
+
+        $response = $this->actingAs($actor)->get(route('departments.show', $department));
+
+        $response->assertStatus(200);
+        $response->assertSee($member->name);
+        $response->assertSee($member->email);
+    }
+
+    public function test_user_without_departments_view_permission_cannot_view_department_show_page(): void
+    {
+        $actor = $this->actorWithPermissions([]);
+        $department = Department::create(['name' => 'Engineering']);
+
+        $response = $this->actingAs($actor)->get(route('departments.show', $department));
+
+        $response->assertStatus(403);
+    }
+
+    public function test_department_show_page_displays_empty_state_when_no_users(): void
+    {
+        $actor = $this->actorWithPermissions(['departments.view']);
+        $department = Department::create(['name' => 'Engineering']);
+
+        $response = $this->actingAs($actor)->get(route('departments.show', $department));
+
+        $response->assertStatus(200);
+        $response->assertSee('No users in this department');
+    }
+
     public function test_user_with_departments_create_permission_can_create_department(): void
     {
         $actor = $this->actorWithPermissions(['departments.create']);

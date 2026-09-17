@@ -35,7 +35,7 @@
         <div class="mt-6 flex flex-wrap items-center gap-6 border-t border-line pt-4">
             <div>
                 <p class="text-xs font-medium uppercase tracking-wide text-ink-muted">Role</p>
-                <x-badge variant="brand" class="mt-1">{{ strtoupper(auth()->user()->role->name) }}</x-badge>
+                <x-badge :variant="auth()->user()->role->badgeVariant()" class="mt-1">{{ strtoupper(auth()->user()->role->name) }}</x-badge>
             </div>
 
             <div>

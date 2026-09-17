@@ -20,6 +20,14 @@ class DepartmentController extends Controller
         return view('departments.index', compact('departments'));
     }
 
+    public function show(Department $department)
+    {
+        $department->load('head');
+        $users = $department->users()->orderBy('name')->paginate(25);
+
+        return view('departments.show', compact('department', 'users'));
+    }
+
     public function create()
     {
         $users = User::orderBy('name')->get();

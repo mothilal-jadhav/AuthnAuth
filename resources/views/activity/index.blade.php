@@ -32,7 +32,7 @@
                 <tr class="border-t border-line hover:bg-paper-alt">
                     <td class="px-4 py-3 text-sm text-ink-muted">{{ $entry->created_at->diffForHumans() }}</td>
                     <td class="px-4 py-3 text-sm text-ink-muted">{{ $entry->causer?->name ?? 'System' }}</td>
-                    <td class="px-4 py-3"><x-badge>{{ $entry->action }}</x-badge></td>
+                    <td class="px-4 py-3"><x-badge :variant="$entry->badgeVariant()">{{ $entry->action }}</x-badge></td>
                     <td class="px-4 py-3 text-sm text-ink-muted">{{ $entry->subject?->name ?? '—' }}</td>
                     <td class="px-4 py-3 text-sm text-ink-muted">{{ $entry->description }}</td>
                 </tr>

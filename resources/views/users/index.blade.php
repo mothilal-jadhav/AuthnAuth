@@ -27,10 +27,10 @@
     </x-page-header>
 
     <div class="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <x-stat label="Total Users" value="{{ $roleCounts->sum() }}" />
-        <x-stat label="Administrators" value="{{ $roleCounts->get('admin', 0) }}" />
-        <x-stat label="Managers" value="{{ $roleCounts->get('manager', 0) }}" />
-        <x-stat label="Users" value="{{ $roleCounts->get('user', 0) }}" />
+        <x-stat label="Total Users" value="{{ $roleCounts->sum() }}" color="brand" />
+        <x-stat label="Administrators" value="{{ $roleCounts->get('admin', 0) }}" color="danger" />
+        <x-stat label="Managers" value="{{ $roleCounts->get('manager', 0) }}" color="warning" />
+        <x-stat label="Users" value="{{ $roleCounts->get('user', 0) }}" color="info" />
     </div>
 
     @if (session('success'))
@@ -81,7 +81,7 @@
                     <td class="px-4 py-3 text-sm text-ink-muted">{{ $user->email }}</td>
 
                     <td class="px-4 py-3">
-                        <x-badge variant="brand">{{ strtoupper($user->role->name) }}</x-badge>
+                        <x-badge :variant="$user->role->badgeVariant()">{{ strtoupper($user->role->name) }}</x-badge>
                     </td>
 
                     <td class="px-4 py-3 text-sm text-ink-muted">{{ $user->department->name ?? '—' }}</td>

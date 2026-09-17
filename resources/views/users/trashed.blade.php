@@ -46,7 +46,7 @@
                     <td class="px-4 py-3 text-sm text-ink-muted">{{ $user->email }}</td>
 
                     <td class="px-4 py-3">
-                        <x-badge variant="brand">{{ strtoupper($user->role->name) }}</x-badge>
+                        <x-badge :variant="$user->role->badgeVariant()">{{ strtoupper($user->role->name) }}</x-badge>
                     </td>
 
                     <td class="px-4 py-3 text-sm text-ink-muted">{{ $user->deleted_at->diffForHumans() }}</td>

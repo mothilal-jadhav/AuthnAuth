@@ -42,4 +42,23 @@ class Role extends Model
     {
         return $query->where('type', 'functional');
     }
+
+    /**
+     * The `<x-badge>` variant used to render this role — a severity gradient
+     * for the hierarchy (admin stands out, manager is mid, user is neutral)
+     * and a distinct hue for every functional role, since those are never
+     * assigned as a primary role and don't need severity signaling.
+     */
+    public function badgeVariant(): string
+    {
+        if ($this->type === 'functional') {
+            return 'accent';
+        }
+
+        return match ($this->name) {
+            'admin' => 'danger',
+            'manager' => 'warning',
+            default => 'neutral',
+        };
+    }
 }

@@ -1,7 +1,7 @@
 <nav class="flex items-center justify-between border-b border-line bg-paper px-4 py-3 sm:px-6">
 
     <a href="{{ route('dashboard') }}" class="flex flex-col leading-tight">
-        <span class="font-display text-lg font-bold text-ink">AuthnAuth</span>
+        <span class="font-display text-lg font-bold text-brand-600">AuthnAuth</span>
         <span class="hidden text-xs text-ink-muted sm:block">Authentication &amp; Authorization</span>
     </a>
 

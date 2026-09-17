@@ -99,6 +99,10 @@ Route::get('/departments/create', [DepartmentController::class, 'create'])
     ->middleware(['auth', 'permission:departments.create'])
     ->name('departments.create');
 
+Route::get('/departments/{department}', [DepartmentController::class, 'show'])
+    ->middleware(['auth', 'permission:departments.view'])
+    ->name('departments.show');
+
 Route::post('/departments', [DepartmentController::class, 'store'])
     ->middleware(['auth', 'permission:departments.create'])
     ->name('departments.store');

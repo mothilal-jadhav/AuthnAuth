@@ -56,4 +56,20 @@ class ActivityLog extends Model
             'properties' => $properties,
         ]);
     }
+
+    /**
+     * The `<x-badge>` variant used to render this entry's action, based on
+     * the `noun.verb` action-string convention every call site already
+     * follows (see `record()` callers) rather than an enumerated list.
+     */
+    public function badgeVariant(): string
+    {
+        return match (true) {
+            str_ends_with($this->action, 'created') => 'success',
+            str_ends_with($this->action, 'deleted') => 'danger',
+            str_ends_with($this->action, 'restored') => 'accent',
+            str_ends_with($this->action, 'password_changed') => 'warning',
+            default => 'info',
+        };
+    }
 }

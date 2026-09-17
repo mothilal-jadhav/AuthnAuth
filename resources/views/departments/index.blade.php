@@ -39,9 +39,17 @@
         <tbody>
             @forelse ($departments as $department)
                 <tr class="border-t border-line hover:bg-paper-alt">
-                    <td class="px-4 py-3 font-medium text-ink">{{ $department->name }}</td>
+                    <td class="px-4 py-3 font-medium text-ink">
+                        <a href="{{ route('departments.show', $department) }}" class="hover:text-brand-600 hover:underline">
+                            {{ $department->name }}
+                        </a>
+                    </td>
                     <td class="px-4 py-3 text-sm text-ink-muted">{{ $department->head->name ?? '—' }}</td>
-                    <td class="px-4 py-3 text-sm text-ink-muted">{{ $department->users_count }}</td>
+                    <td class="px-4 py-3 text-sm text-ink-muted">
+                        <a href="{{ route('departments.show', $department) }}" class="hover:text-brand-600 hover:underline">
+                            {{ $department->users_count }}
+                        </a>
+                    </td>
 
                     <td class="px-4 py-3">
                         <div class="flex items-center gap-4">

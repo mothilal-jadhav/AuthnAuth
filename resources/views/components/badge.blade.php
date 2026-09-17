@@ -8,6 +8,7 @@
         'success' => 'bg-success-bg text-success border-success-line',
         'danger' => 'bg-danger-bg text-danger border-danger-line',
         'warning' => 'bg-warning-bg text-warning border-warning-line',
+        'info' => 'bg-info-bg text-info border-info-line',
     ];
 @endphp
 

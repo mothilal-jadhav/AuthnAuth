@@ -184,7 +184,7 @@ AuthnAuth also exposes a versioned, token-authenticated JSON API alongside the B
 ### Architecture
 
 - **Base path**: `/api/v1/*`, registered in `bootstrap/app.php`, routes defined in `routes/api.php`.
-- **Controllers**: `app/Http/Controllers/Api/V1/` (`AuthController`, `UserController`, `RoleController`, `PermissionController`) — thin, and reuse the exact same `UserPolicy`/`Gate::authorize()`/`permission:<name>` middleware the web controllers use. There is no parallel authorization system for the API.
+- **Controllers**: `app/Http/Controllers/Api/V1/` (`AuthController`, `UserController`, `RoleController`, `PermissionController`, `DepartmentController`) — thin, and reuse the exact same `UserPolicy`/`Gate::authorize()`/`permission:<name>` middleware the web controllers use. There is no parallel authorization system for the API.
 - **Validation**: `app/Http/Requests/Api/V1/` — dedicated FormRequest classes, reusing the shared `HasNameEmailRules` trait where the rules are identical to the web forms.
 - **Responses**: `app/Http/Resources/` — every response is a deliberate field allow-list (`UserResource`, `RoleResource`, `PermissionResource`); `password`/`remember_token` are never serialized.
 - **Shared business logic**: `app/Actions/CreateUser.php` — "create a user with a system-generated temporary password" is used by both the web admin-create-user form and the API, so that rule lives in exactly one place.
@@ -221,6 +221,9 @@ A few deliberate security properties, not just defaults:
 | Get role | `GET /api/v1/roles/{role}` | Bearer + `roles.view` | |
 | List permissions | `GET /api/v1/permissions` | Bearer + `permissions.view` | |
 | Get permission | `GET /api/v1/permissions/{permission}` | Bearer + `permissions.view` | |
+| List departments | `GET /api/v1/departments` | Bearer + `departments.view` | |
+| Get department | `GET /api/v1/departments/{department}` | Bearer + `departments.view` | Includes `head` and `users_count` |
+| List a department's users | `GET /api/v1/departments/{department}/users` | Bearer + `departments.view` | Paginated, same shape as `GET /users` |
 
 Every permission-gated endpoint enforces the exact same `UserPolicy` ordinal-hierarchy rules as the web app — self-management block, strictly-higher-level requirement, last-admin protection — see [Access Control Model](#access-control-model).
 
