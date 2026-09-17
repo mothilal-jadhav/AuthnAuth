@@ -12,16 +12,16 @@
             <span class="pointer-events-none absolute left-0.5 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5"></span>
         </label>
 
-        <div class="hidden items-center gap-3 sm:flex">
-            <div class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 font-display font-semibold text-brand-700">
+        <a href="{{ route('profile') }}" class="flex items-center gap-3 rounded-md px-2 py-1 -mx-2 transition hover:bg-paper-alt" title="My Profile">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 font-display font-semibold text-brand-700">
                 {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
             </div>
 
-            <div class="leading-tight">
+            <div class="hidden leading-tight sm:block">
                 <p class="text-sm font-semibold text-ink">{{ auth()->user()->name }}</p>
                 <p class="text-xs text-ink-muted">{{ auth()->user()->role->name }}</p>
             </div>
-        </div>
+        </a>
 
         <form method="POST" action="{{ url('/logout') }}">
             @csrf

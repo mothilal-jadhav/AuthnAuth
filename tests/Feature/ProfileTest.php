@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Notifications\EmailChangedNotification;
 use App\Notifications\PasswordChangedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
@@ -219,5 +220,55 @@ class ProfileTest extends TestCase
         ]);
 
         $response->assertSessionHasErrors('password', null, 'updatePassword');
+    }
+
+    public function test_guest_cannot_verify_a_password(): void
+    {
+        $response = $this->postJson('/profile/verify-password', [
+            'current_password' => 'whatever',
+        ]);
+
+        $response->assertStatus(401);
+    }
+
+    public function test_user_can_verify_their_own_current_password(): void
+    {
+        $user = $this->makeUser(['password' => 'OldPass123!']);
+
+        $response = $this->actingAs($user)->postJson('/profile/verify-password', [
+            'current_password' => 'OldPass123!',
+        ]);
+
+        $response->assertOk();
+    }
+
+    public function test_verifying_the_wrong_current_password_fails_without_changing_anything(): void
+    {
+        $user = $this->makeUser(['password' => 'OldPass123!']);
+
+        $response = $this->actingAs($user)->postJson('/profile/verify-password', [
+            'current_password' => 'WrongPassword!',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors('current_password');
+        $this->assertTrue(Hash::check('OldPass123!', $user->fresh()->password));
+    }
+
+    public function test_verify_password_endpoint_is_rate_limited(): void
+    {
+        $user = $this->makeUser(['password' => 'OldPass123!']);
+
+        for ($i = 0; $i < 10; $i++) {
+            $this->actingAs($user)->postJson('/profile/verify-password', [
+                'current_password' => 'WrongPassword!',
+            ]);
+        }
+
+        $response = $this->actingAs($user)->postJson('/profile/verify-password', [
+            'current_password' => 'WrongPassword!',
+        ]);
+
+        $response->assertStatus(429);
     }
 }

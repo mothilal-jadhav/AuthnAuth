@@ -12,14 +12,12 @@
         ['permission' => 'users.create', 'href' => route('users.create'), 'icon' => '➕', 'title' => 'Create User', 'description' => 'Create a new user account.', 'color' => 'success'],
         ['permission' => 'activity.view', 'href' => route('activity.index'), 'icon' => '🕘', 'title' => 'Activity Log', 'description' => 'Review recent account changes.', 'color' => 'info'],
         ['permission' => 'departments.view', 'href' => route('departments.index'), 'icon' => '🏢', 'title' => 'Departments', 'description' => 'Manage departments and their heads.', 'color' => 'accent'],
-        ['permission' => 'profile.view', 'href' => route('profile'), 'icon' => strtoupper(substr(auth()->user()->name, 0, 1)), 'title' => 'My Profile', 'description' => 'View your account information.', 'color' => 'warning'],
     ])->filter(fn ($action) => auth()->user()->hasPermission($action['permission']));
 
     $chipColors = [
         'brand' => 'bg-brand-50 text-brand-700',
         'accent' => 'bg-accent-50 text-accent-700',
         'success' => 'bg-success-bg text-success',
-        'warning' => 'bg-warning-bg text-warning',
         'info' => 'bg-info-bg text-info',
     ];
 @endphp

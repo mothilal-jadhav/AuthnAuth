@@ -34,6 +34,10 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('password-reset', fn (Request $request) => Limit::perMinute(6)->by($request->ip()));
         RateLimiter::for('api-login', fn (Request $request) => Limit::perMinute(6)->by($request->ip()));
 
+        // Post-auth endpoint (profile's password-change pre-check), so keyed
+        // per user rather than per IP like the pre-auth limiters above.
+        RateLimiter::for('password-verify', fn (Request $request) => Limit::perMinute(10)->by($request->user()?->id ?: $request->ip()));
+
         // Default limiter for the api middleware group (routes/api.php).
         // Individual endpoints (e.g. API login) get their own, stricter
         // named limiter where warranted, same pattern as `login` above.

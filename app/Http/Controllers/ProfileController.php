@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateProfilePasswordRequest;
 use App\Http\Requests\UpdateProfileRequest;
+use App\Http\Requests\VerifyCurrentPasswordRequest;
 use App\Models\ActivityLog;
 use App\Notifications\EmailChangedNotification;
 use App\Notifications\PasswordChangedNotification;
@@ -14,6 +15,18 @@ class ProfileController extends Controller
     public function show()
     {
         return view('profile');
+    }
+
+    /**
+     * Check the current password against the real hash without changing
+     * anything — powers the profile page's two-step password-change UI
+     * (reveal the new-password fields only after this succeeds). The actual
+     * change endpoint re-validates `current_password` itself regardless, so
+     * this is a UX pre-check, not a trust boundary.
+     */
+    public function verifyPassword(VerifyCurrentPasswordRequest $request)
+    {
+        return response()->json(['message' => 'Password verified.']);
     }
 
     public function update(UpdateProfileRequest $request)

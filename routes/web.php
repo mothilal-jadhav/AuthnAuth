@@ -131,6 +131,10 @@ Route::put('/profile/password', [ProfileController::class, 'updatePassword'])
     ->middleware('auth')
     ->name('profile.password.update');
 
+Route::post('/profile/verify-password', [ProfileController::class, 'verifyPassword'])
+    ->middleware(['auth', 'throttle:password-verify'])
+    ->name('profile.password.verify');
+
 Route::get('/password/change', [ChangePasswordController::class, 'showForm'])
     ->middleware('auth')
     ->name('password.change');

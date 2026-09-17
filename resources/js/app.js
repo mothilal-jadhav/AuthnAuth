@@ -123,6 +123,110 @@ function initConfirmDialog() {
     });
 }
 
+function initToggles() {
+    document.querySelectorAll('[data-show]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var hideEl = document.getElementById(btn.dataset.hide);
+            var showEl = document.getElementById(btn.dataset.show);
+
+            if (hideEl) {
+                hideEl.classList.add('hidden');
+            }
+
+            if (showEl) {
+                showEl.classList.remove('hidden');
+            }
+        });
+    });
+}
+
+function initProfileTabs() {
+    var buttons = document.querySelectorAll('[data-tab-button]');
+
+    if (!buttons.length) {
+        return;
+    }
+
+    var panels = document.querySelectorAll('[data-tab-panel]');
+
+    function activate(name) {
+        panels.forEach(function (panel) {
+            panel.classList.toggle('hidden', panel.dataset.tabPanel !== name);
+        });
+
+        buttons.forEach(function (btn) {
+            var active = btn.dataset.tabButton === name;
+            btn.classList.toggle('bg-paper-alt', active);
+            btn.classList.toggle('text-ink', active);
+            btn.classList.toggle('text-ink-muted', !active);
+        });
+    }
+
+    buttons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            activate(btn.dataset.tabButton);
+        });
+    });
+}
+
+function initPasswordVerify() {
+    var continueBtn = document.getElementById('password-verify-continue');
+
+    if (!continueBtn) {
+        return;
+    }
+
+    var currentInput = document.getElementById('current_password');
+    var errorEl = document.getElementById('password-verify-error');
+    var step2 = document.getElementById('password-step-2');
+    var tokenMeta = document.querySelector('meta[name="csrf-token"]');
+    var csrfToken = tokenMeta ? tokenMeta.getAttribute('content') : '';
+
+    continueBtn.addEventListener('click', function () {
+        errorEl.classList.add('hidden');
+        continueBtn.disabled = true;
+
+        var originalText = continueBtn.textContent;
+        continueBtn.textContent = 'Checking…';
+
+        fetch(continueBtn.dataset.verifyUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+            },
+            body: JSON.stringify({ current_password: currentInput.value }),
+        })
+            .then(function (res) {
+                return res.json().then(function (body) {
+                    return { ok: res.ok, body: body };
+                });
+            })
+            .then(function (result) {
+                if (result.ok) {
+                    step2.classList.remove('hidden');
+                    step2.classList.add('flex');
+                    continueBtn.textContent = 'Verified';
+
+                    return;
+                }
+
+                var fieldErrors = result.body.errors && result.body.errors.current_password;
+                errorEl.textContent = (fieldErrors && fieldErrors[0]) || result.body.message || 'Something went wrong. Please try again.';
+                errorEl.classList.remove('hidden');
+                continueBtn.disabled = false;
+                continueBtn.textContent = originalText;
+            })
+            .catch(function () {
+                errorEl.textContent = 'Something went wrong. Please try again.';
+                errorEl.classList.remove('hidden');
+                continueBtn.disabled = false;
+                continueBtn.textContent = originalText;
+            });
+    });
+}
+
 function initSubmitLoadingState() {
     document.addEventListener('submit', function (e) {
         var form = e.target;
@@ -147,4 +251,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initToasts();
     initConfirmDialog();
     initSubmitLoadingState();
+    initToggles();
+    initProfileTabs();
+    initPasswordVerify();
 });
