@@ -69,6 +69,9 @@ class ActivityLog extends Model
             str_ends_with($this->action, 'deleted') => 'danger',
             str_ends_with($this->action, 'restored') => 'accent',
             str_ends_with($this->action, 'password_changed') => 'warning',
+            str_ends_with($this->action, 'approved') => 'success',
+            str_ends_with($this->action, 'rejected') => 'danger',
+            str_ends_with($this->action, 'cancelled') => 'neutral',
             default => 'info',
         };
     }

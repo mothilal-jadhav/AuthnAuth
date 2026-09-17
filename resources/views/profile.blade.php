@@ -23,13 +23,9 @@
         eyebrow="Account"
         title="My Profile"
         subtitle="View and update your personal account information."
-    >
-        <x-slot:actions>
-            <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-1 text-sm font-medium text-ink-muted transition hover:text-ink">
-                <span aria-hidden="true">&larr;</span> Back to Dashboard
-            </a>
-        </x-slot:actions>
-    </x-page-header>
+        back="{{ route('dashboard') }}"
+        backLabel="Back to Dashboard"
+    />
 
     @if (session('success'))
         <x-alert type="success" class="mb-6">{{ session('success') }}</x-alert>

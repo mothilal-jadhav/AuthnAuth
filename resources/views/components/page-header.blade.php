@@ -8,12 +8,6 @@
 
 <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
     <div>
-        @if ($back)
-            <a href="{{ $back }}" class="mb-2 inline-flex items-center gap-1 text-sm font-medium text-ink-muted transition hover:text-ink">
-                <span aria-hidden="true">&larr;</span> {{ $backLabel }}
-            </a>
-        @endif
-
         @if ($eyebrow)
             <p class="text-xs font-semibold uppercase tracking-wide text-brand-600">{{ $eyebrow }}</p>
         @endif
@@ -25,7 +19,17 @@
         @endif
     </div>
 
-    @isset($actions)
-        <div class="flex flex-wrap items-center gap-3">{{ $actions }}</div>
-    @endisset
+    @if ($back || isset($actions))
+        <div class="flex flex-col items-end gap-3">
+            @if ($back)
+                <a href="{{ $back }}" class="inline-flex items-center gap-1 text-sm font-medium text-ink-muted transition hover:text-ink">
+                    <span aria-hidden="true">&larr;</span> {{ $backLabel }}
+                </a>
+            @endif
+
+            @isset($actions)
+                <div class="flex flex-wrap items-center justify-end gap-3">{{ $actions }}</div>
+            @endisset
+        </div>
+    @endif
 </div>

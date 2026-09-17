@@ -12,6 +12,8 @@
         ['permission' => 'users.create', 'href' => route('users.create'), 'icon' => '➕', 'title' => 'Create User', 'description' => 'Create a new user account.', 'color' => 'success'],
         ['permission' => 'activity.view', 'href' => route('activity.index'), 'icon' => '🕘', 'title' => 'Activity Log', 'description' => 'Review recent account changes.', 'color' => 'info'],
         ['permission' => 'departments.view', 'href' => route('departments.index'), 'icon' => '🏢', 'title' => 'Departments', 'description' => 'Manage departments and their heads.', 'color' => 'accent'],
+        ['permission' => 'leave.apply', 'href' => route('leave.index'), 'icon' => '🌴', 'title' => 'My Leave', 'description' => 'Apply for leave and track your balances.', 'color' => 'warning'],
+        ['permission' => 'leave.approve', 'href' => route('leave.approvals.index'), 'icon' => '✅', 'title' => 'Leave Approvals', 'description' => 'Review pending leave requests.', 'color' => 'warning'],
     ])->filter(fn ($action) => auth()->user()->hasPermission($action['permission']));
 
     $chipColors = [
@@ -19,6 +21,7 @@
         'accent' => 'bg-accent-50 text-accent-700',
         'success' => 'bg-success-bg text-success',
         'info' => 'bg-info-bg text-info',
+        'warning' => 'bg-warning-bg text-warning',
     ];
 @endphp
 

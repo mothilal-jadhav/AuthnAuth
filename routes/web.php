@@ -7,6 +7,10 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\LeaveApprovalController;
+use App\Http\Controllers\LeaveBalanceController;
+use App\Http\Controllers\LeaveRequestController;
+use App\Http\Controllers\LeaveTypeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Auth;
@@ -118,6 +122,74 @@ Route::put('/departments/{department}', [DepartmentController::class, 'update'])
 Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])
     ->middleware(['auth', 'permission:departments.delete'])
     ->name('departments.destroy');
+
+Route::get('/leave', [LeaveRequestController::class, 'index'])
+    ->middleware(['auth', 'permission:leave.apply'])
+    ->name('leave.index');
+
+Route::get('/leave/create', [LeaveRequestController::class, 'create'])
+    ->middleware(['auth', 'permission:leave.apply'])
+    ->name('leave.create');
+
+Route::post('/leave', [LeaveRequestController::class, 'store'])
+    ->middleware(['auth', 'permission:leave.apply'])
+    ->name('leave.store');
+
+Route::get('/leave/approvals', [LeaveApprovalController::class, 'index'])
+    ->middleware(['auth', 'permission:leave.approve'])
+    ->name('leave.approvals.index');
+
+Route::put('/leave/approvals/{leaveRequest}/approve', [LeaveApprovalController::class, 'approve'])
+    ->middleware(['auth', 'permission:leave.approve'])
+    ->name('leave.approvals.approve');
+
+Route::put('/leave/approvals/{leaveRequest}/reject', [LeaveApprovalController::class, 'reject'])
+    ->middleware(['auth', 'permission:leave.approve'])
+    ->name('leave.approvals.reject');
+
+Route::get('/leave/types', [LeaveTypeController::class, 'index'])
+    ->middleware(['auth', 'permission:leave.manage'])
+    ->name('leave.types.index');
+
+Route::get('/leave/types/create', [LeaveTypeController::class, 'create'])
+    ->middleware(['auth', 'permission:leave.manage'])
+    ->name('leave.types.create');
+
+Route::post('/leave/types', [LeaveTypeController::class, 'store'])
+    ->middleware(['auth', 'permission:leave.manage'])
+    ->name('leave.types.store');
+
+Route::get('/leave/types/{leaveType}/edit', [LeaveTypeController::class, 'edit'])
+    ->middleware(['auth', 'permission:leave.manage'])
+    ->name('leave.types.edit');
+
+Route::put('/leave/types/{leaveType}', [LeaveTypeController::class, 'update'])
+    ->middleware(['auth', 'permission:leave.manage'])
+    ->name('leave.types.update');
+
+Route::delete('/leave/types/{leaveType}', [LeaveTypeController::class, 'destroy'])
+    ->middleware(['auth', 'permission:leave.manage'])
+    ->name('leave.types.destroy');
+
+Route::get('/leave/balances', [LeaveBalanceController::class, 'index'])
+    ->middleware(['auth', 'permission:leave.manage'])
+    ->name('leave.balances.index');
+
+Route::get('/leave/balances/{leaveBalance}/edit', [LeaveBalanceController::class, 'edit'])
+    ->middleware(['auth', 'permission:leave.manage'])
+    ->name('leave.balances.edit');
+
+Route::put('/leave/balances/{leaveBalance}', [LeaveBalanceController::class, 'update'])
+    ->middleware(['auth', 'permission:leave.manage'])
+    ->name('leave.balances.update');
+
+Route::get('/leave/{leaveRequest}', [LeaveRequestController::class, 'show'])
+    ->middleware('auth')
+    ->name('leave.show');
+
+Route::delete('/leave/{leaveRequest}', [LeaveRequestController::class, 'cancel'])
+    ->middleware('auth')
+    ->name('leave.cancel');
 
 Route::get('/profile', [ProfileController::class, 'show'])
     ->middleware('auth')

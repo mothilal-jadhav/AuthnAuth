@@ -30,6 +30,7 @@ class PermissionSeeder extends Seeder
             'leave.view' => 'Leave',
             'leave.apply' => 'Leave',
             'leave.approve' => 'Leave',
+            'leave.manage' => 'Leave',
             'payroll.view' => 'Payroll',
             'payroll.manage' => 'Payroll',
             'attendance.view' => 'Attendance',

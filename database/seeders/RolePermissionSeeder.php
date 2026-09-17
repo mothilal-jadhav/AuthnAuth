@@ -28,11 +28,16 @@ class RolePermissionSeeder extends Seeder
                 'roles.assign',
                 'roles.view',
                 'permissions.view',
+                'leave.apply',
+                'leave.approve',
             ])->pluck('id')
         );
 
         $user->permissions()->sync(
-            Permission::where('name', 'profile.view')->pluck('id')
+            Permission::whereIn('name', [
+                'profile.view',
+                'leave.apply',
+            ])->pluck('id')
         );
 
         $hrOfficer = Role::where('name', 'HR Officer')->first();
@@ -45,6 +50,7 @@ class RolePermissionSeeder extends Seeder
                 'departments.view',
                 'leave.view',
                 'leave.approve',
+                'leave.manage',
             ])->pluck('id')
         );
 
