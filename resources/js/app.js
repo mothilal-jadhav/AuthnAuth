@@ -247,6 +247,14 @@ function initSubmitLoadingState() {
     });
 }
 
+function initAutoSubmit() {
+    document.querySelectorAll('[data-auto-submit]').forEach(function (field) {
+        field.addEventListener('change', function () {
+            field.form.submit();
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     initToasts();
     initConfirmDialog();
@@ -254,4 +262,5 @@ document.addEventListener('DOMContentLoaded', function () {
     initToggles();
     initProfileTabs();
     initPasswordVerify();
+    initAutoSubmit();
 });

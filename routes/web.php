@@ -2,11 +2,16 @@
 
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\AttendanceRegularizationApprovalController;
+use App\Http\Controllers\AttendanceRegularizationController;
+use App\Http\Controllers\AttendanceTeamController;
 use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DepartmentShiftController;
 use App\Http\Controllers\LeaveApprovalController;
 use App\Http\Controllers\LeaveBalanceController;
 use App\Http\Controllers\LeaveRequestController;
@@ -190,6 +195,54 @@ Route::get('/leave/{leaveRequest}', [LeaveRequestController::class, 'show'])
 Route::delete('/leave/{leaveRequest}', [LeaveRequestController::class, 'cancel'])
     ->middleware('auth')
     ->name('leave.cancel');
+
+Route::get('/attendance', [AttendanceController::class, 'index'])
+    ->middleware('auth')
+    ->name('attendance.index');
+
+Route::post('/attendance/clock-in', [AttendanceController::class, 'clockIn'])
+    ->middleware('auth')
+    ->name('attendance.clock-in');
+
+Route::post('/attendance/clock-out', [AttendanceController::class, 'clockOut'])
+    ->middleware('auth')
+    ->name('attendance.clock-out');
+
+Route::get('/attendance/regularize', [AttendanceRegularizationController::class, 'create'])
+    ->middleware('auth')
+    ->name('attendance.regularize.create');
+
+Route::post('/attendance/regularize', [AttendanceRegularizationController::class, 'store'])
+    ->middleware('auth')
+    ->name('attendance.regularize.store');
+
+Route::get('/attendance/regularizations', [AttendanceRegularizationApprovalController::class, 'index'])
+    ->middleware(['auth', 'permission:attendance.manage'])
+    ->name('attendance.regularizations.index');
+
+Route::put('/attendance/regularizations/{attendanceRegularization}/approve', [AttendanceRegularizationApprovalController::class, 'approve'])
+    ->middleware(['auth', 'permission:attendance.manage'])
+    ->name('attendance.regularizations.approve');
+
+Route::put('/attendance/regularizations/{attendanceRegularization}/reject', [AttendanceRegularizationApprovalController::class, 'reject'])
+    ->middleware(['auth', 'permission:attendance.manage'])
+    ->name('attendance.regularizations.reject');
+
+Route::get('/attendance/team', [AttendanceTeamController::class, 'index'])
+    ->middleware(['auth', 'permission:attendance.view'])
+    ->name('attendance.team.index');
+
+Route::get('/attendance/shifts', [DepartmentShiftController::class, 'index'])
+    ->middleware(['auth', 'permission:attendance.manage'])
+    ->name('attendance.shifts.index');
+
+Route::get('/attendance/shifts/{department}/edit', [DepartmentShiftController::class, 'edit'])
+    ->middleware(['auth', 'permission:attendance.manage'])
+    ->name('attendance.shifts.edit');
+
+Route::put('/attendance/shifts/{department}', [DepartmentShiftController::class, 'update'])
+    ->middleware(['auth', 'permission:attendance.manage'])
+    ->name('attendance.shifts.update');
 
 Route::get('/profile', [ProfileController::class, 'show'])
     ->middleware('auth')

@@ -30,6 +30,7 @@ class RolePermissionSeeder extends Seeder
                 'permissions.view',
                 'leave.apply',
                 'leave.approve',
+                'attendance.view',
             ])->pluck('id')
         );
 

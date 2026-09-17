@@ -14,7 +14,11 @@
         ['permission' => 'departments.view', 'href' => route('departments.index'), 'icon' => '🏢', 'title' => 'Departments', 'description' => 'Manage departments and their heads.', 'color' => 'accent'],
         ['permission' => 'leave.apply', 'href' => route('leave.index'), 'icon' => '🌴', 'title' => 'My Leave', 'description' => 'Apply for leave and track your balances.', 'color' => 'warning'],
         ['permission' => 'leave.approve', 'href' => route('leave.approvals.index'), 'icon' => '✅', 'title' => 'Leave Approvals', 'description' => 'Review pending leave requests.', 'color' => 'warning'],
-    ])->filter(fn ($action) => auth()->user()->hasPermission($action['permission']));
+        ['permission' => null, 'href' => route('attendance.index'), 'icon' => '🕐', 'title' => 'My Attendance', 'description' => 'Clock in/out and track your attendance.', 'color' => 'info'],
+        ['permission' => 'attendance.view', 'href' => route('attendance.team.index'), 'icon' => '📋', 'title' => 'Team Attendance', 'description' => 'View daily attendance across the team.', 'color' => 'accent'],
+        ['permission' => 'attendance.manage', 'href' => route('attendance.regularizations.index'), 'icon' => '🛠️', 'title' => 'Attendance Corrections', 'description' => 'Review pending correction requests.', 'color' => 'warning'],
+        ['permission' => 'attendance.manage', 'href' => route('attendance.shifts.index'), 'icon' => '⏰', 'title' => 'Shift Settings', 'description' => 'Configure department work hours.', 'color' => 'brand'],
+    ])->filter(fn ($action) => $action['permission'] === null || auth()->user()->hasPermission($action['permission']));
 
     $chipColors = [
         'brand' => 'bg-brand-50 text-brand-700',

@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\AttendanceRegularization;
 use App\Models\LeaveRequest;
 use App\Models\User;
+use App\Policies\AttendanceRegularizationPolicy;
 use App\Policies\LeavePolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -29,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(LeaveRequest::class, LeavePolicy::class);
+        Gate::policy(AttendanceRegularization::class, AttendanceRegularizationPolicy::class);
 
         // Named limiters, not the bare "throttle:6,1" middleware: that form
         // keys solely on IP+domain (no route in the signature), so every
