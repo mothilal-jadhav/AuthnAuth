@@ -59,6 +59,10 @@
         </tbody>
     </x-table>
 
+    <div class="mt-4">
+        {{ $records->links() }}
+    </div>
+
 </main>
 
 @endsection

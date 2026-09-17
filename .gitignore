@@ -1,6 +1,7 @@
 *.log
 .DS_Store
 /API_IMPLEMENTATION_LOG.md
+/PERFORMANCE_BENCHMARK_LOG.md
 .env
 .env.backup
 .env.production

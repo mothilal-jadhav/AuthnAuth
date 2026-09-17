@@ -16,15 +16,22 @@ class AttendanceTeamController extends Controller
 
         $departments = Department::orderBy('name')->get();
 
-        $records = AttendanceRecord::with(['user.department'])
-            ->where('date', $dateString)
-            ->when($request->filled('department_id'), fn ($query) => $query->whereHas(
-                'user',
-                fn ($q) => $q->where('department_id', $request->input('department_id'))
-            ))
-            ->get()
-            ->sortBy(fn ($record) => $record->user->name)
-            ->values();
+        // Joined (rather than sorted in PHP after ->get()) so the ordering
+        // can happen at the DB level and the result set can be paginated —
+        // at a few thousand employees, a single day's roster is itself
+        // thousands of rows.
+        $records = AttendanceRecord::query()
+            ->join('users', 'users.id', '=', 'attendance_records.user_id')
+            ->with(['user.department'])
+            ->where('attendance_records.date', $dateString)
+            ->when(
+                $request->filled('department_id'),
+                fn ($query) => $query->where('users.department_id', $request->input('department_id'))
+            )
+            ->orderBy('users.name')
+            ->select('attendance_records.*')
+            ->paginate(25)
+            ->withQueryString();
 
         return view('attendance.team.index', compact('records', 'departments', 'dateString'));
     }

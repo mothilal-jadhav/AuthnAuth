@@ -54,6 +54,10 @@
         </tbody>
     </x-table>
 
+    <div class="mt-4">
+        {{ $balances->links() }}
+    </div>
+
 </main>
 
 @endsection
