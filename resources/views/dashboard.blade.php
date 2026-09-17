@@ -41,17 +41,8 @@
         <x-badge :variant="auth()->user()->role->badgeVariant()" class="text-sm">{{ strtoupper(auth()->user()->role->name) }}</x-badge>
     </div>
 
-    <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <x-stat label="Account" value="Active" hint="Authenticated user" color="info" />
-        <x-stat label="Role" value="{{ ucfirst(auth()->user()->role->name) }}" hint="Assigned access level" color="brand" />
-        <x-stat label="Access" value="{{ auth()->user()->role->permissions->count() }}" hint="Available actions" color="accent" />
-    </div>
-
     <section>
-        <h2 class="font-display text-lg font-semibold text-ink">Available Actions</h2>
-        <p class="mt-1 text-sm text-ink-muted">Actions available to your account.</p>
-
-        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             @foreach ($quickActions as $action)
                 <a
                     href="{{ $action['href'] }}"
