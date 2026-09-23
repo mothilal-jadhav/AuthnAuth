@@ -12,13 +12,16 @@ class DecideLeaveRequest
 {
     /**
      * @param  'approved'|'rejected'  $decision
+     * @return array{leaveRequest: LeaveRequest, decided: bool}
      */
-    public function execute(LeaveRequest $leaveRequest, User $approver, string $decision, ?string $note = null): LeaveRequest
+    public function execute(LeaveRequest $leaveRequest, User $approver, string $decision, ?string $note = null): array
     {
         // Guards against a double form-submit re-applying the balance
-        // increment on an already-decided request.
+        // increment on an already-decided request. `decided: false` tells
+        // the caller nothing actually happened, so it doesn't report a
+        // false success.
         if ($leaveRequest->status !== 'pending') {
-            return $leaveRequest;
+            return ['leaveRequest' => $leaveRequest, 'decided' => false];
         }
 
         $leaveRequest->update([
@@ -50,6 +53,6 @@ class DecideLeaveRequest
 
         $leaveRequest->user->notify(new LeaveDecisionNotification($leaveRequest->fresh(['leaveType'])));
 
-        return $leaveRequest;
+        return ['leaveRequest' => $leaveRequest, 'decided' => true];
     }
 }

@@ -15,6 +15,16 @@ use Illuminate\Support\Facades\Hash;
 class AuthController extends Controller
 {
     /**
+     * A precomputed bcrypt hash of a fixed placeholder string (never a real
+     * password). Checked against when no user matches the submitted email,
+     * so Hash::check() always pays its usual cost either way — otherwise a
+     * nonexistent email would short-circuit before ever reaching it, making
+     * "no such email" measurably faster than "wrong password" despite both
+     * returning the same generic message.
+     */
+    private const DUMMY_HASH = '$2y$12$1kF/SCd5h.67y0Re7o4nfexAosZDYWzsCtrimh7.SYQWf2qTu96sC';
+
+    /**
      * Log in
      *
      * Exchanges an email/password pair for a Sanctum bearer token. Send the
@@ -40,7 +50,9 @@ class AuthController extends Controller
 
         $user = User::where('email', $credentials['email'])->first();
 
-        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
+        $passwordMatches = Hash::check($credentials['password'], $user->password ?? self::DUMMY_HASH);
+
+        if (! $user || ! $passwordMatches) {
             return response()->json([
                 'message' => 'The provided credentials do not match our records.',
             ], 401);

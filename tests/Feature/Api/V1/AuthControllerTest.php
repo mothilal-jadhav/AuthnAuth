@@ -145,6 +145,31 @@ class AuthControllerTest extends TestCase
         $meResponse->assertStatus(401);
     }
 
+    public function test_a_token_stops_working_once_the_account_is_forced_to_change_its_password(): void
+    {
+        // Covers the gap ForcePasswordChange leaves on the API: that
+        // middleware only guards the `web` group, so EnsurePasswordIsCurrent
+        // (routes/api.php's protected group) is the only thing stopping an
+        // already-issued token from being used once must_change_password is
+        // set on an existing account — something no feature does yet, but
+        // the token issued below predates the flag being set, proving
+        // enforcement isn't just a login-time check.
+        $user = $this->makeUser(['email' => 'reset@example.com', 'password' => 'Password123!']);
+
+        $login = $this->postJson('/api/v1/auth/login', [
+            'email' => 'reset@example.com',
+            'password' => 'Password123!',
+        ]);
+        $token = $login->json('meta.token');
+
+        $user->forceFill(['must_change_password' => true])->save();
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson('/api/v1/auth/me');
+
+        $response->assertStatus(423);
+    }
+
     public function test_api_login_is_rate_limited(): void
     {
         $this->makeUser(['email' => 'throttle@example.com', 'password' => 'Password123!']);

@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\ActivityLogController;
-use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceRegularizationApprovalController;
 use App\Http\Controllers\AttendanceRegularizationController;
@@ -44,9 +43,6 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])
 Route::post('/login', [LoginController::class, 'login'])
     ->middleware('throttle:login')
     ->name('login.submit');
-
-Route::get('/admin', [AdminController::class, 'index'])
-    ->middleware(['auth', 'role:admin']);
 
 Route::get('/activity', [ActivityLogController::class, 'index'])
     ->middleware(['auth', 'permission:activity.view'])

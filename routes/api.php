@@ -17,7 +17,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     // so a session-based guard can never authenticate a request here — see
     // the login() docblock on AuthController for the credential-check side
     // of that.
-    Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
+    Route::middleware(['auth:sanctum', 'throttle:api', 'password.current'])->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
         Route::get('/auth/me', [AuthController::class, 'me'])->name('auth.me');
 

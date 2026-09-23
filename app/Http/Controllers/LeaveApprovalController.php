@@ -22,14 +22,22 @@ class LeaveApprovalController extends Controller
     {
         $this->authorize('decide', $leaveRequest);
 
-        $decideLeaveRequest->execute($leaveRequest, auth()->user(), 'approved');
+        $result = $decideLeaveRequest->execute($leaveRequest, auth()->user(), 'approved');
+
+        if (! $result['decided']) {
+            return redirect()->route('leave.approvals.index')->with('error', 'This request was already decided.');
+        }
 
         return redirect()->route('leave.approvals.index')->with('success', 'Leave request approved.');
     }
 
     public function reject(RejectLeaveRequestRequest $request, LeaveRequest $leaveRequest, DecideLeaveRequest $decideLeaveRequest)
     {
-        $decideLeaveRequest->execute($leaveRequest, auth()->user(), 'rejected', $request->validated()['decision_note']);
+        $result = $decideLeaveRequest->execute($leaveRequest, auth()->user(), 'rejected', $request->validated()['decision_note']);
+
+        if (! $result['decided']) {
+            return redirect()->route('leave.approvals.index')->with('error', 'This request was already decided.');
+        }
 
         return redirect()->route('leave.approvals.index')->with('success', 'Leave request rejected.');
     }

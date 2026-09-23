@@ -110,13 +110,17 @@ class LeaveApprovalTest extends TestCase
         $leaveRequest = $this->pendingRequestFor($requester, $leaveType, 3);
 
         $this->actingAs($approver)->put(route('leave.approvals.approve', $leaveRequest));
-        $this->actingAs($approver)->put(route('leave.approvals.approve', $leaveRequest));
+        $secondResponse = $this->actingAs($approver)->put(route('leave.approvals.approve', $leaveRequest));
 
         $this->assertDatabaseHas('leave_balances', [
             'user_id' => $requester->id,
             'leave_type_id' => $leaveType->id,
             'used_days' => 3,
         ]);
+
+        // The second call did nothing — it must not claim it did.
+        $secondResponse->assertSessionHas('error', 'This request was already decided.');
+        $secondResponse->assertSessionMissing('success');
     }
 
     public function test_approver_can_reject_a_pending_request_with_a_note(): void

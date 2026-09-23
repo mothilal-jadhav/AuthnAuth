@@ -57,6 +57,17 @@ class AuthenticationTest extends TestCase
         $response->assertSessionHasErrors();
     }
 
+    public function test_login_fails_for_a_nonexistent_email_with_the_same_generic_message(): void
+    {
+        $response = $this->post('/login', [
+            'email' => 'nobody@example.com',
+            'password' => 'WhateverPass1!',
+        ]);
+
+        $this->assertGuest();
+        $response->assertSessionHasErrors(['email' => 'The provided credentials do not match our records.']);
+    }
+
     public function test_guest_cannot_access_dashboard(): void
     {
         $response = $this->get('/dashboard');

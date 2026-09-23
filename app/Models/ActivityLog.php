@@ -26,9 +26,14 @@ class ActivityLog extends Model
         ];
     }
 
+    /**
+     * Fetched with trashed users included, same reasoning as subject()
+     * below: a causer whose account is later soft-deleted must still
+     * resolve a name on every entry they caused in the past.
+     */
     public function causer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'causer_id');
+        return $this->belongsTo(User::class, 'causer_id')->withTrashed();
     }
 
     /**

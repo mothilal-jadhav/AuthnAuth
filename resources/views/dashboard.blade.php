@@ -42,19 +42,19 @@
     </div>
 
     <section>
-        <div class="scrollbar-hide -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-4 pb-2 sm:-mx-6 sm:px-6">
+        <div class="scrollbar-hide -mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-4 pt-4 pb-3 sm:-mx-6 sm:px-6">
             @foreach ($quickActions as $action)
                 <a
                     href="{{ $action['href'] }}"
-                    class="group flex w-80 shrink-0 snap-start items-start gap-5 rounded-xl border border-line bg-paper p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:w-96"
+                    class="group flex w-96 shrink-0 snap-start items-start gap-6 rounded-xl border border-line bg-paper p-8 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:w-[26rem]"
                 >
-                    <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-2xl {{ $chipColors[$action['color']] }}">
+                    <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-3xl {{ $chipColors[$action['color']] }}">
                         {{ $action['icon'] }}
                     </div>
 
                     <div>
-                        <h3 class="font-display text-lg font-semibold text-ink group-hover:text-brand-700">{{ $action['title'] }}</h3>
-                        <p class="mt-1 text-sm text-ink-muted">{{ $action['description'] }}</p>
+                        <h3 class="font-display text-xl font-semibold text-ink group-hover:text-brand-700">{{ $action['title'] }}</h3>
+                        <p class="mt-1.5 text-sm text-ink-muted">{{ $action['description'] }}</p>
                     </div>
                 </a>
             @endforeach

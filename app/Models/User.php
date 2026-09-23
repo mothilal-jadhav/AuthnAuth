@@ -115,10 +115,12 @@ class User extends Authenticatable
             "user:{$this->id}:permissions",
             now()->addMinutes(30),
             function () {
-                $names = $this->role->permissions()->pluck('name');
+                $this->loadMissing(['role.permissions', 'functionalRoles.permissions']);
+
+                $names = $this->role->permissions->pluck('name');
 
                 foreach ($this->functionalRoles as $functionalRole) {
-                    $names = $names->merge($functionalRole->permissions()->pluck('name'));
+                    $names = $names->merge($functionalRole->permissions->pluck('name'));
                 }
 
                 return $names->unique()->values()->all();

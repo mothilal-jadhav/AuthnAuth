@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class UserPermissionsTest extends TestCase
@@ -46,6 +47,33 @@ class UserPermissionsTest extends TestCase
         $this->assertTrue($user->hasRole('user'));
         $this->assertFalse($user->hasRole('HR Officer'));
         $this->assertTrue($user->hasFunctionalRole('HR Officer'));
+    }
+
+    public function test_checking_permissions_does_not_run_a_query_per_functional_role(): void
+    {
+        $userRole = Role::create(['name' => 'user', 'type' => 'hierarchy', 'level' => 10]);
+        $permission = Permission::create(['name' => 'leave.apply']);
+
+        $functionalRoles = collect(range(1, 3))->map(function (int $i) use ($permission) {
+            $role = Role::create(['name' => "Functional {$i}", 'type' => 'functional', 'level' => 0]);
+            $role->permissions()->attach($permission);
+
+            return $role;
+        });
+
+        $user = User::factory()->create(['role_id' => $userRole->id]);
+        $user->functionalRoles()->attach($functionalRoles->pluck('id'));
+        $user->refresh();
+
+        DB::enableQueryLog();
+        $user->hasPermission('leave.apply');
+        $queryCount = count(DB::getQueryLog());
+        DB::disableQueryLog();
+
+        // A fixed, small number of queries regardless of how many
+        // functional roles are attached (role+its permissions,
+        // functionalRoles+their permissions) -- not one query per role.
+        $this->assertLessThanOrEqual(4, $queryCount);
     }
 
     public function test_assigning_a_functional_role_reflects_immediately_when_cache_is_busted(): void

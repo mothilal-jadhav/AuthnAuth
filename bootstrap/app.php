@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsurePasswordIsCurrent;
 use App\Http\Middleware\ForcePasswordChange;
 use App\Http\Middleware\PermissionMiddleware;
 use App\Http\Middleware\RoleMiddleware;
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
+            'password.current' => EnsurePasswordIsCurrent::class,
         ]);
 
         $middleware->appendToGroup('web', ForcePasswordChange::class);
