@@ -41,6 +41,7 @@ AuthnAuth is primarily a Blade, server-rendered monolith — plain forms and red
 - Role-based (`role:<name>`) and permission-based (`permission:<name>`) route middleware
 - An ordinal role hierarchy (`Role::level`) enforced centrally in a single policy — higher-level roles can manage lower-level ones; a role can never manage or delete itself, and the last remaining admin can't be deleted
 - Full user management UI: list/filter by role, create, edit, delete, with role-aware guardrails on who can assign which roles
+- Optional additive "functional" roles that grant extra permissions on top of a user's single hierarchy role, without affecting who manages whom (none are seeded by default)
 - A `php artisan app:create-admin` command for bootstrapping the first admin account on a fresh install
 - Named, per-route rate limiting on login, password reset, and API login
 - Idempotent database seeders for roles and permissions — safe to re-run at any time
@@ -143,12 +144,12 @@ app/
   Actions/                 Business logic shared by the web app and the API (e.g. CreateUser)
   Console/Commands/       Artisan commands (e.g. app:create-admin)
   Http/Controllers/Auth/  Login, ForgotPassword, ResetPassword, ChangePassword
-  Http/Controllers/       Admin dashboard, user/department management, profile
+  Http/Controllers/       User management, profile
   Http/Controllers/Api/V1/ API controllers — reuse the same UserPolicy/middleware, no parallel authz
   Http/Requests/Api/V1/    API-specific FormRequest validation
   Http/Resources/          API response shaping (deliberate field allow-lists)
   Http/Middleware/        Role/permission route guards, forced-password-change redirect
-  Models/                 User, Role, Permission, Department
+  Models/                 User, Role, Permission
   Policies/                UserPolicy — the role-hierarchy management rules (shared by web + API)
   Providers/               Policy + rate limiter registration
 
@@ -173,7 +174,6 @@ tests/                     PHPUnit feature and unit tests (tests/Feature/Api/V1/
 | Dashboard | `GET /dashboard` | `auth` |
 | Forgot / reset password | `GET/POST /forgot-password`, `GET/POST /reset-password/{token}` | `guest`, `throttle:password-reset` |
 | Change password | `GET/POST /password/change` | `auth` |
-| Admin panel | `GET /admin` | `auth`, `role:admin` |
 | User management | `GET/POST/PUT/DELETE /users*` | `auth`, `permission:users.view\|create\|update\|delete` |
 | Profile | `GET /profile` | `auth` |
 
@@ -184,10 +184,10 @@ AuthnAuth also exposes a versioned, token-authenticated JSON API alongside the B
 ### Architecture
 
 - **Base path**: `/api/v1/*`, registered in `bootstrap/app.php`, routes defined in `routes/api.php`.
-- **Controllers**: `app/Http/Controllers/Api/V1/` (`AuthController`, `UserController`, `RoleController`, `PermissionController`, `DepartmentController`) — thin, and reuse the exact same `UserPolicy`/`Gate::authorize()`/`permission:<name>` middleware the web controllers use. There is no parallel authorization system for the API.
+- **Controllers**: `app/Http/Controllers/Api/V1/` (`AuthController`, `UserController`, `RoleController`, `PermissionController`) — thin, and reuse the exact same `UserPolicy`/`Gate::authorize()`/`permission:<name>` middleware the web controllers use. There is no parallel authorization system for the API.
 - **Validation**: `app/Http/Requests/Api/V1/` — dedicated FormRequest classes, reusing the shared `HasNameEmailRules` trait where the rules are identical to the web forms.
 - **Responses**: `app/Http/Resources/` — every response is a deliberate field allow-list (`UserResource`, `RoleResource`, `PermissionResource`); `password`/`remember_token` are never serialized.
-- **Shared business logic**: `app/Actions/CreateUser.php` — "create a user with a system-generated temporary password" is used by both the web admin-create-user form and the API, so that rule lives in exactly one place.
+- **Shared business logic**: `app/Actions/` (`CreateUser`, `UpdateUser`, `DeleteUser`) — used by both the web user-management forms and the API, so each rule lives in exactly one place.
 
 ### Authentication
 
@@ -214,16 +214,11 @@ A few deliberate security properties, not just defaults:
 | Create user | `POST /api/v1/users` | Bearer + `users.create` | Same `UserPolicy::create()` hierarchy rules as the web form |
 | Get user | `GET /api/v1/users/{user}` | Bearer + `users.view` | |
 | Update user | `PUT /api/v1/users/{user}` | Bearer + `users.update` | Also syncs functional roles if `functional_role_ids` is present in the body |
-| Delete user | `DELETE /api/v1/users/{user}` | Bearer + `users.delete` | Soft delete |
-| List trashed users | `GET /api/v1/users/trashed` | Bearer + `users.restore` | |
-| Restore user | `POST /api/v1/users/{id}/restore` | Bearer + `users.restore` | |
-| List roles | `GET /api/v1/roles` | Bearer + `roles.view` | Hierarchy roles (admin/manager/user) + functional roles (e.g. Payroll Officer) |
+| Delete user | `DELETE /api/v1/users/{user}` | Bearer + `users.delete` | Permanent; also revokes the user's API tokens |
+| List roles | `GET /api/v1/roles` | Bearer + `roles.view` | Hierarchy roles (admin/manager/user) + any functional roles |
 | Get role | `GET /api/v1/roles/{role}` | Bearer + `roles.view` | |
 | List permissions | `GET /api/v1/permissions` | Bearer + `permissions.view` | |
 | Get permission | `GET /api/v1/permissions/{permission}` | Bearer + `permissions.view` | |
-| List departments | `GET /api/v1/departments` | Bearer + `departments.view` | |
-| Get department | `GET /api/v1/departments/{department}` | Bearer + `departments.view` | Includes `head` and `users_count` |
-| List a department's users | `GET /api/v1/departments/{department}/users` | Bearer + `departments.view` | Paginated, same shape as `GET /users` |
 
 Every permission-gated endpoint enforces the exact same `UserPolicy` ordinal-hierarchy rules as the web app — self-management block, strictly-higher-level requirement, last-admin protection — see [Access Control Model](#access-control-model).
 
@@ -253,7 +248,6 @@ curl -X POST http://localhost:8000/api/v1/auth/login \
         "email": "admin@example.com",
         "must_change_password": false,
         "role": { "id": 1, "name": "admin", "type": "hierarchy", "level": 100 },
-        "department": null,
         "functional_roles": [],
         "created_at": "2026-09-16T10:58:03+00:00",
         "updated_at": "2026-09-16T10:58:12+00:00"

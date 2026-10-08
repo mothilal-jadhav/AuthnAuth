@@ -23,57 +23,13 @@ class RolePermissionSeeder extends Seeder
                 'users.view',
                 'users.create',
                 'users.update',
-                'profile.view',
-                'departments.view',
-                'roles.assign',
                 'roles.view',
                 'permissions.view',
-                'leave.apply',
-                'leave.approve',
-                'attendance.view',
             ])->pluck('id')
         );
 
-        $user->permissions()->sync(
-            Permission::whereIn('name', [
-                'profile.view',
-                'leave.apply',
-            ])->pluck('id')
-        );
-
-        $hrOfficer = Role::where('name', 'HR Officer')->first();
-        $payrollOfficer = Role::where('name', 'Payroll Officer')->first();
-        $recruiter = Role::where('name', 'Recruiter')->first();
-        $attendanceAdmin = Role::where('name', 'Attendance Admin')->first();
-
-        $hrOfficer->permissions()->sync(
-            Permission::whereIn('name', [
-                'departments.view',
-                'leave.view',
-                'leave.approve',
-                'leave.manage',
-            ])->pluck('id')
-        );
-
-        $payrollOfficer->permissions()->sync(
-            Permission::whereIn('name', [
-                'payroll.view',
-                'payroll.manage',
-            ])->pluck('id')
-        );
-
-        $recruiter->permissions()->sync(
-            Permission::whereIn('name', [
-                'recruitment.view',
-                'recruitment.manage',
-            ])->pluck('id')
-        );
-
-        $attendanceAdmin->permissions()->sync(
-            Permission::whereIn('name', [
-                'attendance.view',
-                'attendance.manage',
-            ])->pluck('id')
-        );
+        // Plain users can log in and manage their own profile (no
+        // permission needed for that), but nothing else.
+        $user->permissions()->sync([]);
     }
 }

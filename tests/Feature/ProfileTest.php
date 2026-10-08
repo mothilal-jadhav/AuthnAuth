@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\ActivityLog;
 use App\Models\Role;
 use App\Models\User;
 use App\Notifications\EmailChangedNotification;
@@ -60,7 +59,7 @@ class ProfileTest extends TestCase
         ]);
     }
 
-    public function test_updating_email_notifies_old_and_new_address_and_logs_activity(): void
+    public function test_updating_email_notifies_old_and_new_address(): void
     {
         Notification::fake();
 
@@ -80,13 +79,6 @@ class ProfileTest extends TestCase
                     && in_array('new@example.com', $routes, true);
             }
         );
-
-        $log = ActivityLog::where('action', 'user.updated')
-            ->where('subject_id', $user->id)
-            ->firstOrFail();
-
-        $this->assertSame($user->id, $log->causer_id);
-        $this->assertSame($user->id, $log->subject_id);
     }
 
     public function test_updating_name_only_sends_no_email_changed_notification(): void
@@ -157,12 +149,6 @@ class ProfileTest extends TestCase
         $this->assertAuthenticatedAs($user->fresh());
 
         Notification::assertSentTo($user, PasswordChangedNotification::class);
-
-        $this->assertDatabaseHas('activity_logs', [
-            'action' => 'user.password_changed',
-            'causer_id' => $user->id,
-            'subject_id' => $user->id,
-        ]);
     }
 
     public function test_self_service_password_change_revokes_existing_api_tokens(): void

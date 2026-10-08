@@ -13,11 +13,8 @@ class PermissionController extends Controller
     /**
      * List permissions
      *
-     * The full permission catalog, grouped via `group` for display. Includes
-     * groups with no routes behind them yet (leave/payroll/attendance/
-     * recruitment — deliberate scaffolding for future HRMS modules, see
-     * PermissionSeeder). Small, bounded catalog, no pagination. Requires
-     * permissions.view.
+     * The full permission catalog, grouped via `group` for display. Small,
+     * bounded catalog, no pagination. Requires permissions.view.
      */
     public function index()
     {

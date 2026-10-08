@@ -67,7 +67,7 @@ class AuthController extends Controller
 
         $token = $user->createToken('api-token')->plainTextToken;
 
-        return (new UserResource($user->load(['role', 'department', 'functionalRoles'])))
+        return (new UserResource($user->load(['role', 'functionalRoles'])))
             ->additional(['meta' => ['token' => $token]])
             ->response();
     }
@@ -108,6 +108,6 @@ class AuthController extends Controller
      */
     public function me(Request $request)
     {
-        return new UserResource($request->user()->load(['role', 'department', 'functionalRoles']));
+        return new UserResource($request->user()->load(['role', 'functionalRoles']));
     }
 }

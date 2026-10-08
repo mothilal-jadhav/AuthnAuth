@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\ActivityLog;
 use App\Notifications\PasswordChangedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
@@ -35,8 +34,6 @@ class ChangePasswordController extends Controller
         // existing API tokens, otherwise a stolen token stays valid even
         // after the account owner thinks they've secured their account.
         $user->tokens()->delete();
-
-        ActivityLog::record('user.password_changed', $user, "{$user->name} changed their own password.");
 
         $user->notify(new PasswordChangedNotification);
 

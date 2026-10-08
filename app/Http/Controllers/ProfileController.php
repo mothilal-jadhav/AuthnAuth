@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\UpdateProfilePasswordRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Requests\VerifyCurrentPasswordRequest;
-use App\Models\ActivityLog;
 use App\Notifications\EmailChangedNotification;
 use App\Notifications\PasswordChangedNotification;
 use Illuminate\Support\Facades\Notification;
@@ -39,19 +38,7 @@ class ProfileController extends Controller
         $user->fill($validated);
         $user->save();
 
-        $changes = $user->getChanges();
-        unset($changes['updated_at']);
-
-        if ($changes !== []) {
-            ActivityLog::record(
-                'user.updated',
-                $user,
-                "{$user->name} updated their own profile.",
-                $changes
-            );
-        }
-
-        if (array_key_exists('email', $changes)) {
+        if ($user->wasChanged('email')) {
             Notification::route('mail', array_unique([$oldEmail, $user->email]))
                 ->notify(new EmailChangedNotification($oldEmail, $user->email, $user->name));
         }
@@ -71,8 +58,6 @@ class ProfileController extends Controller
         // existing API tokens, otherwise a stolen token stays valid even
         // after the account owner thinks they've secured their account.
         $user->tokens()->delete();
-
-        ActivityLog::record('user.password_changed', $user, "{$user->name} changed their own password.");
 
         $user->notify(new PasswordChangedNotification);
 

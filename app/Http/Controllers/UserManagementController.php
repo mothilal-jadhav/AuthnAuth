@@ -4,11 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Actions\CreateUser;
 use App\Actions\DeleteUser;
-use App\Actions\RestoreUser;
 use App\Actions\UpdateUser;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
-use App\Models\Department;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -17,7 +15,7 @@ class UserManagementController extends Controller
 {
     public function index(Request $request)
     {
-        $users = User::with(['role', 'department'])
+        $users = User::with('role')
             ->when($request->filled('role'), fn ($query) => $query->whereHas(
                 'role',
                 fn ($q) => $q->where('name', $request->input('role'))
@@ -37,9 +35,8 @@ class UserManagementController extends Controller
     public function create()
     {
         $roles = $this->assignableRoles(forCreate: true);
-        $departments = Department::orderBy('name')->get();
 
-        return view('users.create', compact('roles', 'departments'));
+        return view('users.create', compact('roles'));
     }
 
     public function store(StoreUserRequest $request, CreateUser $createUser)
@@ -61,10 +58,9 @@ class UserManagementController extends Controller
         $this->authorize('update', $user);
 
         $roles = $this->assignableRoles();
-        $departments = Department::orderBy('name')->get();
         $functionalRoles = Role::functional()->orderBy('name')->get();
 
-        return view('users.edit', compact('user', 'roles', 'departments', 'functionalRoles'));
+        return view('users.edit', compact('user', 'roles', 'functionalRoles'));
     }
 
     public function update(UpdateUserRequest $request, User $user, UpdateUser $updateUser)
@@ -100,29 +96,6 @@ class UserManagementController extends Controller
         return redirect()
             ->route('users.index')
             ->with('success', 'User deleted successfully.');
-    }
-
-    public function trashed()
-    {
-        $users = User::onlyTrashed()
-            ->with('role')
-            ->orderBy('deleted_at', 'desc')
-            ->paginate(25);
-
-        return view('users.trashed', compact('users'));
-    }
-
-    public function restore(int $id, RestoreUser $restoreUser)
-    {
-        $user = User::onlyTrashed()->findOrFail($id);
-
-        $this->authorize('restore', $user);
-
-        $restoreUser->execute($user);
-
-        return redirect()
-            ->route('users.trashed')
-            ->with('success', 'User restored successfully.');
     }
 
     /**

@@ -15,8 +15,7 @@ class RoleController extends Controller
      *
      * Both hierarchy roles (admin/manager/user — drive management
      * authorization via their ordinal `level`) and functional roles
-     * (additive-only permission grants, e.g. Payroll Officer — `level` is
-     * meaningless for these) are returned; `type` distinguishes them. Small,
+     * (additive-only permission grants — `level` is meaningless for these) are returned; `type` distinguishes them. Small,
      * bounded catalog, no pagination. Requires roles.view.
      */
     public function index()

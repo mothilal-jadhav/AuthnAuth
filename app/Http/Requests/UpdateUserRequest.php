@@ -30,7 +30,6 @@ class UpdateUserRequest extends FormRequest
             'name' => $this->nameRules(),
             'email' => $this->emailRules($this->route('user')->id),
             'role_id' => ['required', Rule::exists('roles', 'id')->where('type', 'hierarchy')],
-            'department_id' => ['nullable', 'exists:departments,id'],
             'functional_role_ids' => ['array'],
             'functional_role_ids.*' => [Rule::exists('roles', 'id')->where('type', 'functional')],
         ];

@@ -16,12 +16,8 @@ class RoleSeeder extends Seeder
         Role::firstOrCreate(['name' => 'manager'], ['type' => 'hierarchy', 'level' => 50]);
         Role::firstOrCreate(['name' => 'user'], ['type' => 'hierarchy', 'level' => 10]);
 
-        // Functional roles: additive permission grants only. Never used in
-        // hierarchy comparisons (level is meaningless for these), assigned
-        // via the role_user pivot (see User::functionalRoles()).
-        Role::firstOrCreate(['name' => 'HR Officer'], ['type' => 'functional', 'level' => 0]);
-        Role::firstOrCreate(['name' => 'Payroll Officer'], ['type' => 'functional', 'level' => 0]);
-        Role::firstOrCreate(['name' => 'Recruiter'], ['type' => 'functional', 'level' => 0]);
-        Role::firstOrCreate(['name' => 'Attendance Admin'], ['type' => 'functional', 'level' => 0]);
+        // Functional roles (additive permission grants, assigned via the
+        // role_user pivot — see User::functionalRoles()) go here as
+        // ['type' => 'functional', 'level' => 0]. None are seeded by default.
     }
 }

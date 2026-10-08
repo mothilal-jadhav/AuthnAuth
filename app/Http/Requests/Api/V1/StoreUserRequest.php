@@ -26,7 +26,6 @@ class StoreUserRequest extends FormRequest
             'name' => $this->nameRules(),
             'email' => $this->emailRules(),
             'role_id' => ['required', Rule::exists('roles', 'id')->where('type', 'hierarchy')],
-            'department_id' => ['nullable', 'exists:departments,id'],
         ];
     }
 }

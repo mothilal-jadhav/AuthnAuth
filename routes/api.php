@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
-use App\Http\Controllers\Api\V1\DepartmentController;
 use App\Http\Controllers\Api\V1\PermissionController;
 use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\UserController;
@@ -28,18 +27,6 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::post('/users', [UserController::class, 'store'])
             ->middleware('permission:users.create')
             ->name('users.store');
-
-        // Must be registered before GET /users/{user} — otherwise "trashed"
-        // would be matched as a {user} route-model-binding value.
-        Route::get('/users/trashed', [UserController::class, 'trashed'])
-            ->middleware('permission:users.restore')
-            ->name('users.trashed');
-
-        // {id}, not {user}: restore() looks the user up via onlyTrashed()
-        // itself, since implicit route-model binding excludes soft-deleted rows.
-        Route::post('/users/{id}/restore', [UserController::class, 'restore'])
-            ->middleware('permission:users.restore')
-            ->name('users.restore');
 
         Route::get('/users/{user}', [UserController::class, 'show'])
             ->middleware('permission:users.view')
@@ -68,17 +55,5 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('/permissions/{permission}', [PermissionController::class, 'show'])
             ->middleware('permission:permissions.view')
             ->name('permissions.show');
-
-        Route::get('/departments', [DepartmentController::class, 'index'])
-            ->middleware('permission:departments.view')
-            ->name('departments.index');
-
-        Route::get('/departments/{department}', [DepartmentController::class, 'show'])
-            ->middleware('permission:departments.view')
-            ->name('departments.show');
-
-        Route::get('/departments/{department}/users', [DepartmentController::class, 'users'])
-            ->middleware('permission:departments.view')
-            ->name('departments.users');
     });
 });

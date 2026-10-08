@@ -84,13 +84,6 @@
                     @endforeach
                 </x-field>
 
-                <x-field name="department_id" label="Department" as="select">
-                    <option value="">No department</option>
-                    @foreach ($departments as $department)
-                        <option value="{{ $department->id }}" @selected(old('department_id') == $department->id)>{{ $department->name }}</option>
-                    @endforeach
-                </x-field>
-
                 <x-alert type="info">
                     <strong class="font-semibold">Password.</strong>
                     A secure temporary password will be generated automatically for the new user.

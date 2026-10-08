@@ -77,15 +77,9 @@ class UserPolicy
         return true;
     }
 
-    public function restore(User $actor, User $target): bool
-    {
-        return $this->manage($actor, $target);
-    }
-
     /**
      * Whether $actor may assign/remove $target's functional roles
-     * (additive permission grants, e.g. Payroll Officer — see
-     * User::functionalRoles()). Deliberately reuses manage()'s rule rather
+     * (additive permission grants — see User::functionalRoles()). Deliberately reuses manage()'s rule rather
      * than a looser one: this is still a privilege-granting action, so the
      * same self-management block applies — an actor can never grant
      * themselves extra functional access, even if they could otherwise

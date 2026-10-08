@@ -16,10 +16,6 @@
         backLabel="Back to Dashboard"
     >
         <x-slot:actions>
-            @if (auth()->user()->hasPermission('users.restore'))
-                <x-button :href="route('users.trashed')" variant="secondary" size="sm">Deleted Users</x-button>
-            @endif
-
             @if (auth()->user()->hasPermission('users.create'))
                 <x-button :href="route('users.create')" size="sm">+ Create User</x-button>
             @endif
@@ -61,7 +57,6 @@
                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">User</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Email</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Role</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Department</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Actions</th>
             </tr>
         </thead>
@@ -83,8 +78,6 @@
                     <td class="px-4 py-3">
                         <x-badge :variant="$user->role->badgeVariant()">{{ strtoupper($user->role->name) }}</x-badge>
                     </td>
-
-                    <td class="px-4 py-3 text-sm text-ink-muted">{{ $user->department->name ?? '—' }}</td>
 
                     <td class="px-4 py-3">
                         @canany(['update', 'delete'], $user)
@@ -113,7 +106,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5">
+                    <td colspan="4">
                         <x-empty-state icon="👥" title="No users found" description="Try a different filter, or create the first account." class="m-4 border-0" />
                     </td>
                 </tr>

@@ -34,12 +34,12 @@ class RoleControllerTest extends TestCase
     public function test_actor_with_roles_view_permission_can_list_roles(): void
     {
         $actor = $this->actorWithPermissions(['roles.view']);
-        Role::create(['name' => 'Payroll Officer', 'type' => 'functional', 'level' => 0]);
+        Role::create(['name' => 'Auditor', 'type' => 'functional', 'level' => 0]);
 
         $response = $this->actingAs($actor)->getJson('/api/v1/roles');
 
         $response->assertOk();
-        $response->assertJsonFragment(['name' => 'Payroll Officer', 'type' => 'functional']);
+        $response->assertJsonFragment(['name' => 'Auditor', 'type' => 'functional']);
         // Roles/Permissions are small, unpaginated catalogs (unlike /users),
         // so no meta/links keys here — a deliberately simpler envelope than
         // the paginated endpoints, not an inconsistency.
@@ -60,12 +60,12 @@ class RoleControllerTest extends TestCase
     public function test_show_returns_a_single_role(): void
     {
         $actor = $this->actorWithPermissions(['roles.view']);
-        $role = Role::create(['name' => 'Recruiter', 'type' => 'functional', 'level' => 0]);
+        $role = Role::create(['name' => 'Reviewer', 'type' => 'functional', 'level' => 0]);
 
         $response = $this->actingAs($actor)->getJson("/api/v1/roles/{$role->id}");
 
         $response->assertOk();
-        $response->assertJsonPath('data.name', 'Recruiter');
+        $response->assertJsonPath('data.name', 'Reviewer');
         $response->assertJsonPath('data.type', 'functional');
     }
 }

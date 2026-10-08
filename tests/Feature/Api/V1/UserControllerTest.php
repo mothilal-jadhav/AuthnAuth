@@ -224,13 +224,6 @@ class UserControllerTest extends TestCase
         $response->assertJsonStructure(['meta' => ['temporary_password']]);
 
         $this->assertArrayNotHasKey('password', $response->json('data'));
-
-        $created = User::where('email', 'fresh.hire@example.com')->firstOrFail();
-        $this->assertDatabaseHas('activity_logs', [
-            'action' => 'user.created',
-            'causer_id' => $admin->id,
-            'subject_id' => $created->id,
-        ]);
     }
 
     public function test_actor_without_users_create_permission_cannot_create_user(): void
@@ -333,7 +326,7 @@ class UserControllerTest extends TestCase
         $response->assertExactJson(['message' => 'Resource not found.']);
     }
 
-    public function test_updating_a_user_persists_changes_and_logs_activity(): void
+    public function test_updating_a_user_persists_changes(): void
     {
         $admin = $this->actorWithPermissions('admin', ['users.view', 'users.update']);
         $userRole = $this->hierarchyRole('user', 10);
@@ -347,46 +340,41 @@ class UserControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('data.name', 'New Name');
-
-        $this->assertDatabaseHas('activity_logs', [
-            'action' => 'user.updated',
-            'causer_id' => $admin->id,
-            'subject_id' => $target->id,
-        ]);
+        $this->assertSame('New Name', $target->fresh()->name);
     }
 
     public function test_update_assigns_functional_role_and_permission_is_immediately_effective(): void
     {
         $admin = $this->actorWithPermissions('admin', ['users.view', 'users.update']);
         $userRole = $this->hierarchyRole('user', 10);
-        $payrollOfficer = Role::create(['name' => 'Payroll Officer', 'type' => 'functional', 'level' => 0]);
-        $payrollOfficer->permissions()->attach(Permission::firstOrCreate(['name' => 'payroll.view']));
+        $auditor = Role::create(['name' => 'Auditor', 'type' => 'functional', 'level' => 0]);
+        $auditor->permissions()->attach(Permission::firstOrCreate(['name' => 'reports.view']));
         $target = User::factory()->create(['name' => 'Target Person', 'role_id' => $userRole->id]);
 
-        $this->assertFalse($target->hasPermission('payroll.view'));
+        $this->assertFalse($target->hasPermission('reports.view'));
 
         $response = $this->actingAs($admin)->putJson("/api/v1/users/{$target->id}", [
             'name' => $target->name,
             'email' => $target->email,
             'role_id' => $userRole->id,
-            'functional_role_ids' => [$payrollOfficer->id],
+            'functional_role_ids' => [$auditor->id],
         ]);
 
         $response->assertOk();
-        $response->assertJsonPath('data.functional_roles.0.name', 'Payroll Officer');
+        $response->assertJsonPath('data.functional_roles.0.name', 'Auditor');
 
-        $this->assertDatabaseHas('role_user', ['user_id' => $target->id, 'role_id' => $payrollOfficer->id]);
+        $this->assertDatabaseHas('role_user', ['user_id' => $target->id, 'role_id' => $auditor->id]);
         // No manual Cache::forget — the controller must have busted it.
-        $this->assertTrue($target->fresh()->hasPermission('payroll.view'));
+        $this->assertTrue($target->fresh()->hasPermission('reports.view'));
     }
 
     public function test_update_with_empty_functional_role_ids_array_clears_functional_roles(): void
     {
         $admin = $this->actorWithPermissions('admin', ['users.view', 'users.update']);
         $userRole = $this->hierarchyRole('user', 10);
-        $recruiter = Role::create(['name' => 'Recruiter', 'type' => 'functional', 'level' => 0]);
+        $reviewer = Role::create(['name' => 'Reviewer', 'type' => 'functional', 'level' => 0]);
         $target = User::factory()->create(['name' => 'Target Person', 'role_id' => $userRole->id]);
-        $target->functionalRoles()->attach($recruiter);
+        $target->functionalRoles()->attach($reviewer);
 
         $response = $this->actingAs($admin)->putJson("/api/v1/users/{$target->id}", [
             'name' => $target->name,
@@ -396,16 +384,16 @@ class UserControllerTest extends TestCase
         ]);
 
         $response->assertOk();
-        $this->assertDatabaseMissing('role_user', ['user_id' => $target->id, 'role_id' => $recruiter->id]);
+        $this->assertDatabaseMissing('role_user', ['user_id' => $target->id, 'role_id' => $reviewer->id]);
     }
 
     public function test_update_without_functional_role_ids_key_leaves_functional_roles_untouched(): void
     {
         $admin = $this->actorWithPermissions('admin', ['users.view', 'users.update']);
         $userRole = $this->hierarchyRole('user', 10);
-        $recruiter = Role::create(['name' => 'Recruiter', 'type' => 'functional', 'level' => 0]);
+        $reviewer = Role::create(['name' => 'Reviewer', 'type' => 'functional', 'level' => 0]);
         $target = User::factory()->create(['role_id' => $userRole->id]);
-        $target->functionalRoles()->attach($recruiter);
+        $target->functionalRoles()->attach($reviewer);
 
         $response = $this->actingAs($admin)->putJson("/api/v1/users/{$target->id}", [
             'name' => 'Renamed Only',
@@ -414,7 +402,7 @@ class UserControllerTest extends TestCase
         ]);
 
         $response->assertOk();
-        $this->assertDatabaseHas('role_user', ['user_id' => $target->id, 'role_id' => $recruiter->id]);
+        $this->assertDatabaseHas('role_user', ['user_id' => $target->id, 'role_id' => $reviewer->id]);
     }
 
     public function test_manager_cannot_update_themselves(): void
@@ -463,7 +451,7 @@ class UserControllerTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $target->id, 'role_id' => $userRole->id]);
     }
 
-    public function test_deleting_a_user_soft_deletes_and_returns_no_content(): void
+    public function test_deleting_a_user_removes_them_and_returns_no_content(): void
     {
         $admin = $this->actorWithPermissions('admin', ['users.view', 'users.delete']);
         $userRole = $this->hierarchyRole('user', 10);
@@ -472,13 +460,7 @@ class UserControllerTest extends TestCase
         $response = $this->actingAs($admin)->deleteJson("/api/v1/users/{$target->id}");
 
         $response->assertNoContent();
-        $this->assertSoftDeleted('users', ['id' => $target->id]);
-
-        $this->assertDatabaseHas('activity_logs', [
-            'action' => 'user.deleted',
-            'causer_id' => $admin->id,
-            'subject_id' => $target->id,
-        ]);
+        $this->assertDatabaseMissing('users', ['id' => $target->id]);
     }
 
     public function test_last_admin_cannot_be_deleted(): void
@@ -488,65 +470,7 @@ class UserControllerTest extends TestCase
         $response = $this->actingAs($admin)->deleteJson("/api/v1/users/{$admin->id}");
 
         $response->assertStatus(403);
-        $this->assertDatabaseHas('users', ['id' => $admin->id, 'deleted_at' => null]);
-    }
-
-    public function test_trashed_lists_soft_deleted_users(): void
-    {
-        $admin = $this->actorWithPermissions('admin', ['users.view', 'users.restore']);
-        $userRole = $this->hierarchyRole('user', 10);
-        $target = User::factory()->create(['name' => 'Trashed Person', 'role_id' => $userRole->id]);
-        $target->delete();
-
-        $response = $this->actingAs($admin)->getJson('/api/v1/users/trashed');
-
-        $response->assertOk();
-        $response->assertJsonFragment(['name' => 'Trashed Person']);
-    }
-
-    public function test_restore_restores_a_soft_deleted_user(): void
-    {
-        $admin = $this->actorWithPermissions('admin', ['users.view', 'users.restore']);
-        $userRole = $this->hierarchyRole('user', 10);
-        $target = User::factory()->create(['role_id' => $userRole->id]);
-        $target->delete();
-
-        $response = $this->actingAs($admin)->postJson("/api/v1/users/{$target->id}/restore");
-
-        $response->assertOk();
-        $this->assertDatabaseHas('users', ['id' => $target->id, 'deleted_at' => null]);
-
-        $this->assertDatabaseHas('activity_logs', [
-            'action' => 'user.restored',
-            'causer_id' => $admin->id,
-            'subject_id' => $target->id,
-        ]);
-    }
-
-    public function test_actor_without_restore_permission_cannot_restore(): void
-    {
-        $manager = $this->actorWithPermissions('manager', ['users.view']);
-        $userRole = $this->hierarchyRole('user', 10);
-        $target = User::factory()->create(['role_id' => $userRole->id]);
-        $target->delete();
-
-        $response = $this->actingAs($manager)->postJson("/api/v1/users/{$target->id}/restore");
-
-        $response->assertStatus(403);
-        $this->assertSoftDeleted('users', ['id' => $target->id]);
-    }
-
-    public function test_restoring_a_nonexistent_user_returns_a_generic_404(): void
-    {
-        $admin = $this->actorWithPermissions('admin', ['users.view', 'users.restore']);
-
-        $response = $this->actingAs($admin)->postJson('/api/v1/users/999999/restore');
-
-        $response->assertStatus(404);
-        // restore()'s findOrFail() is a different code path from implicit
-        // route-model binding (used by show()/update()/destroy()) — confirm
-        // the same generic-message fix applies here too.
-        $response->assertExactJson(['message' => 'Resource not found.']);
+        $this->assertDatabaseHas('users', ['id' => $admin->id]);
     }
 
     // --- Phase 10 gap-fill: positive hierarchy/authorization coverage,
@@ -612,7 +536,7 @@ class UserControllerTest extends TestCase
         $response = $this->actingAs($manager)->deleteJson("/api/v1/users/{$target->id}");
 
         $response->assertNoContent();
-        $this->assertSoftDeleted('users', ['id' => $target->id]);
+        $this->assertDatabaseMissing('users', ['id' => $target->id]);
     }
 
     public function test_normal_user_role_is_blocked_by_policy_even_with_explicit_permission(): void
@@ -643,7 +567,7 @@ class UserControllerTest extends TestCase
         $response = $this->actingAs($actingAdmin)->deleteJson("/api/v1/users/{$otherAdmin->id}");
 
         $response->assertNoContent();
-        $this->assertSoftDeleted('users', ['id' => $otherAdmin->id]);
+        $this->assertDatabaseMissing('users', ['id' => $otherAdmin->id]);
     }
 
     public function test_self_deletion_is_blocked_even_when_not_the_last_admin(): void
@@ -658,7 +582,7 @@ class UserControllerTest extends TestCase
         $response = $this->actingAs($admin)->deleteJson("/api/v1/users/{$admin->id}");
 
         $response->assertStatus(403);
-        $this->assertDatabaseHas('users', ['id' => $admin->id, 'deleted_at' => null]);
+        $this->assertDatabaseHas('users', ['id' => $admin->id]);
     }
 
     public function test_create_user_requires_name_email_and_role_id(): void

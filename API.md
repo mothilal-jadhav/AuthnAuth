@@ -36,12 +36,10 @@ guessing at the shape now.
 1. **Route** in `routes/api.php`, inside the existing `auth:sanctum` +
    `throttle:api` group. Add `permission:<name>` (or `role:<name>`)
    middleware — every endpoint should be gated by something, even a
-   read-only one. If the route takes a path parameter that needs implicit
-   model binding, remember trashed-record routes (see `users/trashed`,
-   `users/{id}/restore`) can't use implicit binding — order matters (a
-   literal path segment like `/trashed` must be registered before a
+   read-only one. Order matters for path parameters: a literal segment
+   (e.g. a hypothetical `/users/export`) must be registered before a
    `{wildcard}` route with the same method and segment count, or the
-   wildcard swallows it).
+   wildcard swallows it.
 2. **FormRequest** in `app/Http/Requests/Api/V1/`. `authorize()` should call
    `$this->user()->can(...)` for anything needing the ordinal hierarchy
    (mirroring the equivalent web FormRequest if one exists — reuse
@@ -54,7 +52,7 @@ guessing at the shape now.
    middleware or the FormRequest's `authorize()`, do the work, return a
    Resource (or `Resource::collection()` for a list). Never `fill()`/mass-
    assign fields that aren't in the model's `#[Fillable(...)]` list (see
-   `User` — `role_id`/`department_id`/`must_change_password` are set via
+   `User` — `role_id`/`must_change_password` are set via
    explicit property assignment everywhere, never `fill()`).
 4. **Resource**: add fields to the allow-list explicitly. Never let a
    Resource fall through to the default full-model serialization — every
@@ -73,8 +71,8 @@ guessing at the shape now.
    (from a FormRequest with `rules()`/`after()`) — it does **not** infer
    custom JSON error responses your controller returns directly (like the
    `423` on login), inline `$this->authorize()` calls with no FormRequest
-   backing them (like `destroy()`/`restore()`'s `403`s), or a plain
-   `int $id` route parameter's `404` (only implicit *model* binding is
+   backing them (like `destroy()`'s `403`), or a plain `int $id`
+   route parameter's `404` (only implicit *model* binding is
    auto-detected).
 6. **Test** in `tests/Feature/Api/V1/`. Match the existing per-file
    `actorWithPermissions()`/helper-method convention — no shared test

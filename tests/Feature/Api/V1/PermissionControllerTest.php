@@ -34,12 +34,12 @@ class PermissionControllerTest extends TestCase
     public function test_actor_with_permissions_view_permission_can_list_permissions(): void
     {
         $actor = $this->actorWithPermissions(['permissions.view']);
-        Permission::firstOrCreate(['name' => 'payroll.view'], ['group' => 'Payroll']);
+        Permission::firstOrCreate(['name' => 'reports.view'], ['group' => 'Reports']);
 
         $response = $this->actingAs($actor)->getJson('/api/v1/permissions');
 
         $response->assertOk();
-        $response->assertJsonFragment(['name' => 'payroll.view', 'group' => 'Payroll']);
+        $response->assertJsonFragment(['name' => 'reports.view', 'group' => 'Reports']);
         // Roles/Permissions are small, unpaginated catalogs (unlike /users),
         // so no meta/links keys here — a deliberately simpler envelope than
         // the paginated endpoints, not an inconsistency.
@@ -60,12 +60,12 @@ class PermissionControllerTest extends TestCase
     public function test_show_returns_a_single_permission(): void
     {
         $actor = $this->actorWithPermissions(['permissions.view']);
-        $permission = Permission::firstOrCreate(['name' => 'leave.approve'], ['group' => 'Leave']);
+        $permission = Permission::firstOrCreate(['name' => 'reports.view'], ['group' => 'Reports']);
 
         $response = $this->actingAs($actor)->getJson("/api/v1/permissions/{$permission->id}");
 
         $response->assertOk();
-        $response->assertJsonPath('data.name', 'leave.approve');
-        $response->assertJsonPath('data.group', 'Leave');
+        $response->assertJsonPath('data.name', 'reports.view');
+        $response->assertJsonPath('data.group', 'Reports');
     }
 }

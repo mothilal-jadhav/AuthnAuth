@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\ActivityLog;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
@@ -25,138 +24,28 @@ class UserManagementTest extends TestCase
         return User::factory()->create(['role_id' => $role->id]);
     }
 
-    public function test_deleting_a_user_soft_deletes_and_logs_activity(): void
+    public function test_deleting_a_user_removes_them_and_revokes_their_api_tokens(): void
     {
         $admin = $this->actorWithPermissions('admin', ['users.view', 'users.delete']);
         $userRole = Role::firstOrCreate(['name' => 'user'], ['level' => 10]);
         $target = User::factory()->create(['role_id' => $userRole->id]);
+        $target->createToken('api-token');
 
         $response = $this->actingAs($admin)->delete("/users/{$target->id}");
 
         $response->assertRedirect(route('users.index'));
 
-        $this->assertSoftDeleted('users', ['id' => $target->id]);
-        $this->assertDatabaseHas('users', ['id' => $target->id]);
-
-        $this->assertDatabaseHas('activity_logs', [
-            'action' => 'user.deleted',
-            'causer_id' => $admin->id,
-            'subject_id' => $target->id,
-        ]);
+        $this->assertDatabaseMissing('users', ['id' => $target->id]);
+        $this->assertDatabaseMissing('personal_access_tokens', ['tokenable_id' => $target->id]);
     }
 
-    public function test_deleted_user_is_excluded_from_the_users_index(): void
+    public function test_deleted_users_email_can_be_reused(): void
     {
-        $admin = $this->actorWithPermissions('admin', ['users.view', 'users.delete']);
-        $userRole = Role::firstOrCreate(['name' => 'user'], ['level' => 10]);
-        $target = User::factory()->create(['role_id' => $userRole->id, 'name' => 'Soon Gone']);
-
-        $target->delete();
-
-        $response = $this->actingAs($admin)->get('/users');
-
-        $response->assertOk();
-        $response->assertDontSee('Soon Gone');
-    }
-
-    public function test_admin_can_restore_a_deleted_user(): void
-    {
-        $admin = $this->actorWithPermissions('admin', ['users.view', 'users.delete', 'users.restore']);
-        $userRole = Role::firstOrCreate(['name' => 'user'], ['level' => 10]);
-        $target = User::factory()->create(['role_id' => $userRole->id]);
-        $target->delete();
-
-        $response = $this->actingAs($admin)->post("/users/{$target->id}/restore");
-
-        $response->assertRedirect(route('users.trashed'));
-
-        $this->assertDatabaseHas('users', ['id' => $target->id, 'deleted_at' => null]);
-
-        $this->assertDatabaseHas('activity_logs', [
-            'action' => 'user.restored',
-            'causer_id' => $admin->id,
-            'subject_id' => $target->id,
-        ]);
-    }
-
-    public function test_actor_without_restore_permission_cannot_restore(): void
-    {
-        $manager = $this->actorWithPermissions('manager', ['users.view']);
-        $userRole = Role::firstOrCreate(['name' => 'user'], ['level' => 10]);
-        $target = User::factory()->create(['role_id' => $userRole->id]);
-        $target->delete();
-
-        $response = $this->actingAs($manager)->post("/users/{$target->id}/restore");
-
-        $response->assertStatus(403);
-        $this->assertSoftDeleted('users', ['id' => $target->id]);
-    }
-
-    public function test_guest_cannot_view_trashed_users(): void
-    {
-        $response = $this->get('/users/trashed');
-
-        $response->assertRedirect('/login');
-    }
-
-    public function test_authorized_actor_can_view_trashed_users_list(): void
-    {
-        $admin = $this->actorWithPermissions('admin', ['users.view', 'users.delete', 'users.restore']);
-        $userRole = Role::firstOrCreate(['name' => 'user'], ['level' => 10]);
-        $target = User::factory()->create(['role_id' => $userRole->id, 'name' => 'Trashed Person']);
-        $target->delete();
-
-        $response = $this->actingAs($admin)->get('/users/trashed');
-
-        $response->assertOk();
-        $response->assertSee('Trashed Person');
-    }
-
-    public function test_actor_without_restore_permission_cannot_view_trashed_users_list(): void
-    {
-        $manager = $this->actorWithPermissions('manager', ['users.view']);
-
-        $response = $this->actingAs($manager)->get('/users/trashed');
-
-        $response->assertStatus(403);
-    }
-
-    public function test_authorized_actor_can_view_activity_log(): void
-    {
-        $admin = $this->actorWithPermissions('admin', ['users.view', 'users.create', 'activity.view']);
-        $userRole = Role::firstOrCreate(['name' => 'user'], ['level' => 10]);
-
-        $this->actingAs($admin)->post('/users', [
-            'name' => 'Logged Hire',
-            'email' => 'logged.hire@example.com',
-            'role_id' => $userRole->id,
-        ]);
-
-        $response = $this->actingAs($admin)->get('/activity');
-
-        $response->assertOk();
-        $response->assertSee('user.created');
-        $response->assertSee('Logged Hire');
-    }
-
-    public function test_actor_without_activity_permission_cannot_view_activity_log(): void
-    {
-        $manager = $this->actorWithPermissions('manager', ['users.view']);
-
-        $response = $this->actingAs($manager)->get('/activity');
-
-        $response->assertStatus(403);
-    }
-
-    public function test_soft_deleted_users_email_still_blocks_reuse(): void
-    {
-        // Documents a known limitation: MySQL's unique index on `email` is
-        // not partial/filtered, so a trashed user's email can't be reused
-        // until they're restored. See HasNameEmailRules::emailRules().
         $admin = $this->actorWithPermissions('admin', ['users.view', 'users.delete', 'users.create']);
         $userRole = Role::firstOrCreate(['name' => 'user'], ['level' => 10]);
         $target = User::factory()->create(['role_id' => $userRole->id, 'email' => 'reusable@example.com']);
-        $target->delete();
+
+        $this->actingAs($admin)->delete("/users/{$target->id}");
 
         $response = $this->actingAs($admin)->post('/users', [
             'name' => 'New Owner',
@@ -164,11 +53,11 @@ class UserManagementTest extends TestCase
             'role_id' => $userRole->id,
         ]);
 
-        $response->assertSessionHasErrors('email');
-        $this->assertDatabaseMissing('users', ['name' => 'New Owner']);
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('users', ['name' => 'New Owner', 'email' => 'reusable@example.com']);
     }
 
-    public function test_creating_a_user_logs_activity(): void
+    public function test_creating_a_user_forces_a_password_change(): void
     {
         $admin = $this->actorWithPermissions('admin', ['users.view', 'users.create']);
         $userRole = Role::firstOrCreate(['name' => 'user'], ['level' => 10]);
@@ -181,30 +70,23 @@ class UserManagementTest extends TestCase
 
         $created = User::where('email', 'fresh.hire@example.com')->firstOrFail();
 
-        $this->assertDatabaseHas('activity_logs', [
-            'action' => 'user.created',
-            'causer_id' => $admin->id,
-            'subject_id' => $created->id,
-        ]);
+        $this->assertTrue($created->must_change_password);
+        $this->assertSame($userRole->id, $created->role_id);
     }
 
-    public function test_updating_a_user_logs_activity_with_changes(): void
+    public function test_updating_a_user_persists_changes(): void
     {
         $admin = $this->actorWithPermissions('admin', ['users.view', 'users.update']);
         $userRole = Role::firstOrCreate(['name' => 'user'], ['level' => 10]);
         $target = User::factory()->create(['role_id' => $userRole->id, 'name' => 'Old Name']);
 
-        $this->actingAs($admin)->put("/users/{$target->id}", [
+        $response = $this->actingAs($admin)->put("/users/{$target->id}", [
             'name' => 'New Name',
             'email' => $target->email,
             'role_id' => $userRole->id,
         ]);
 
-        $log = ActivityLog::where('action', 'user.updated')
-            ->where('subject_id', $target->id)
-            ->firstOrFail();
-
-        $this->assertSame($admin->id, $log->causer_id);
-        $this->assertSame('New Name', $log->properties['name'] ?? null);
+        $response->assertRedirect(route('users.index'));
+        $this->assertSame('New Name', $target->fresh()->name);
     }
 }

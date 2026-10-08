@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::table('roles', function (Blueprint $table) {
             // 'hierarchy' roles (admin/manager/user) participate in ordinal
             // management comparisons via `level` (see UserPolicy). 'functional'
-            // roles are additive permission grants only (e.g. Payroll Officer)
+            // roles are additive permission grants only
             // and never affect who-manages-whom.
             $table->string('type')->default('hierarchy')->after('name');
         });

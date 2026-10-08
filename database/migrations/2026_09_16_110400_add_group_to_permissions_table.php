@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('permissions', function (Blueprint $table) {
-            // UI grouping label only (e.g. "Users", "Departments", "Payroll").
+            // UI grouping label only (e.g. "Users", "Roles").
             // Not used in any authorization check.
             $table->string('group')->nullable()->after('name');
         });

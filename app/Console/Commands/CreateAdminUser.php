@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\ActivityLog;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Console\Attributes\Description;
@@ -54,13 +53,6 @@ class CreateAdminUser extends Command
         $user->role_id = $adminRole->id;
         $user->must_change_password = true;
         $user->save();
-
-        ActivityLog::record(
-            'user.created',
-            $user,
-            'Admin account provisioned via app:create-admin.',
-            ['via' => 'app:create-admin']
-        );
 
         $this->info("Admin account created: {$email}");
 

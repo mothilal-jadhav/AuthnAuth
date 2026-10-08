@@ -43,14 +43,7 @@
                 @endforeach
             </x-field>
 
-            <x-field name="department_id" label="Department" as="select">
-                <option value="">No department</option>
-                @foreach ($departments as $department)
-                    <option value="{{ $department->id }}" @selected(old('department_id', $user->department_id) == $department->id)>{{ $department->name }}</option>
-                @endforeach
-            </x-field>
-
-            @can('assignFunctionalRoles', $user)
+            @if ($functionalRoles->isNotEmpty() && auth()->user()->can('assignFunctionalRoles', $user))
                 <input type="hidden" name="functional_role_ids_submitted" value="1">
 
                 <div class="flex flex-col gap-2">
@@ -74,7 +67,7 @@
                         @endforeach
                     </div>
                 </div>
-            @endcan
+            @endif
 
             <x-button size="lg" class="w-full">Update User</x-button>
         </form>

@@ -8,16 +8,9 @@
 
 @php
     $quickActions = collect([
+        ['permission' => null, 'href' => route('profile'), 'icon' => '👤', 'title' => 'My Profile', 'description' => 'Update your details and change your password.', 'color' => 'info'],
         ['permission' => 'users.view', 'href' => route('users.index'), 'icon' => '👁', 'title' => 'View Users', 'description' => 'View users you are authorized to access.', 'color' => 'brand'],
         ['permission' => 'users.create', 'href' => route('users.create'), 'icon' => '➕', 'title' => 'Create User', 'description' => 'Create a new user account.', 'color' => 'success'],
-        ['permission' => 'activity.view', 'href' => route('activity.index'), 'icon' => '🕘', 'title' => 'Activity Log', 'description' => 'Review recent account changes.', 'color' => 'info'],
-        ['permission' => 'departments.view', 'href' => route('departments.index'), 'icon' => '🏢', 'title' => 'Departments', 'description' => 'Manage departments and their heads.', 'color' => 'accent'],
-        ['permission' => 'leave.apply', 'href' => route('leave.index'), 'icon' => '🌴', 'title' => 'My Leave', 'description' => 'Apply for leave and track your balances.', 'color' => 'warning'],
-        ['permission' => 'leave.approve', 'href' => route('leave.approvals.index'), 'icon' => '✅', 'title' => 'Leave Approvals', 'description' => 'Review pending leave requests.', 'color' => 'warning'],
-        ['permission' => null, 'href' => route('attendance.index'), 'icon' => '🕐', 'title' => 'My Attendance', 'description' => 'Clock in/out and track your attendance.', 'color' => 'info'],
-        ['permission' => 'attendance.view', 'href' => route('attendance.team.index'), 'icon' => '📋', 'title' => 'Team Attendance', 'description' => 'View daily attendance across the team.', 'color' => 'accent'],
-        ['permission' => 'attendance.manage', 'href' => route('attendance.regularizations.index'), 'icon' => '🛠️', 'title' => 'Attendance Corrections', 'description' => 'Review pending correction requests.', 'color' => 'warning'],
-        ['permission' => 'attendance.manage', 'href' => route('attendance.shifts.index'), 'icon' => '⏰', 'title' => 'Shift Settings', 'description' => 'Configure department work hours.', 'color' => 'brand'],
     ])->filter(fn ($action) => $action['permission'] === null || auth()->user()->hasPermission($action['permission']));
 
     $chipColors = [

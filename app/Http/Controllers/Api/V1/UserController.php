@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\CreateUser;
 use App\Actions\DeleteUser;
-use App\Actions\RestoreUser;
 use App\Actions\UpdateUser;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\IndexUserRequest;
@@ -29,7 +28,7 @@ class UserController extends Controller
     {
         $filters = $request->validated();
 
-        $users = User::with(['role', 'department', 'functionalRoles'])
+        $users = User::with(['role', 'functionalRoles'])
             ->when($filters['role'] ?? null, fn ($query, $role) => $query->whereHas(
                 'role',
                 fn ($q) => $q->where('name', $role)
@@ -62,7 +61,7 @@ class UserController extends Controller
     public function store(StoreUserRequest $request, CreateUser $createUser)
     {
         $result = $createUser->execute($request->validated());
-        $user = $result['user']->load(['role', 'department', 'functionalRoles']);
+        $user = $result['user']->load(['role', 'functionalRoles']);
 
         return (new UserResource($user))
             ->additional(['meta' => ['temporary_password' => $result['temporary_password']]])
@@ -75,13 +74,13 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        return new UserResource($user->load(['role', 'department', 'functionalRoles']));
+        return new UserResource($user->load(['role', 'functionalRoles']));
     }
 
     /**
      * Update a user
      *
-     * Updates name/email/role/department. If `functional_role_ids` is
+     * Updates name/email/role. If `functional_role_ids` is
      * present in the body at all — including an empty array — the user's
      * additive functional roles are synced to exactly that set; omitting the
      * key entirely leaves them untouched. Requires users.update plus
@@ -109,14 +108,14 @@ class UserController extends Controller
 
         $user = $updateUser->execute($user, $validated, $functionalRoleIds);
 
-        return new UserResource($user->fresh(['role', 'department', 'functionalRoles']));
+        return new UserResource($user->fresh(['role', 'functionalRoles']));
     }
 
     /**
      * Delete a user
      *
-     * Soft-deletes the account (see GET /users/trashed and POST
-     * /users/{id}/restore). Requires users.delete plus UserPolicy::delete.
+     * Permanently deletes the account and revokes its API tokens. Requires
+     * users.delete plus UserPolicy::delete.
      */
     #[Response(403, description: 'Blocked by UserPolicy — self-deletion, insufficient hierarchy level, or this is the last remaining admin.')]
     public function destroy(User $user, DeleteUser $deleteUser)
@@ -126,38 +125,5 @@ class UserController extends Controller
         $deleteUser->execute($user);
 
         return response()->noContent();
-    }
-
-    /**
-     * List trashed users
-     *
-     * Paginated list of soft-deleted accounts. Requires users.restore.
-     */
-    public function trashed()
-    {
-        $users = User::onlyTrashed()
-            ->with(['role', 'department'])
-            ->orderBy('deleted_at', 'desc')
-            ->paginate(25);
-
-        return UserResource::collection($users);
-    }
-
-    /**
-     * Restore a trashed user
-     *
-     * Requires users.restore plus UserPolicy::restore's hierarchy check.
-     */
-    #[Response(403, description: 'Blocked by UserPolicy — e.g. self-restoration or insufficient hierarchy level.')]
-    #[Response(404, description: 'No soft-deleted user exists with this id.')]
-    public function restore(int $id, RestoreUser $restoreUser)
-    {
-        $user = User::onlyTrashed()->findOrFail($id);
-
-        $this->authorize('restore', $user);
-
-        $restoreUser->execute($user);
-
-        return new UserResource($user->load(['role', 'department', 'functionalRoles']));
     }
 }

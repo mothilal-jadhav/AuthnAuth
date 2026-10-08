@@ -10,8 +10,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Cache;
@@ -19,10 +17,8 @@ use Laravel\Sanctum\HasApiTokens;
 
 /**
  * @property int $role_id
- * @property int|null $department_id
  * @property bool $must_change_password
  * @property-read Role $role
- * @property-read Department|null $department
  * @property-read Collection<int, Role> $functionalRoles
  */
 #[Fillable(['name', 'email', 'password'])]
@@ -30,7 +26,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * Get the attributes that should be cast.
@@ -56,23 +52,8 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
-    public function department(): BelongsTo
-    {
-        return $this->belongsTo(Department::class);
-    }
-
-    public function leaveRequests(): HasMany
-    {
-        return $this->hasMany(LeaveRequest::class);
-    }
-
-    public function leaveBalances(): HasMany
-    {
-        return $this->hasMany(LeaveBalance::class);
-    }
-
     /**
-     * Additive roles (e.g. Payroll Officer) that grant extra permissions
+     * Additive roles that grant extra permissions
      * only. Never consulted by hasRole() or UserPolicy's hierarchy checks.
      */
     public function functionalRoles(): BelongsToMany
