@@ -80,17 +80,18 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        // Security review finding #4: auth:sanctum isn't purely
-        // bearer-token-based by framework design — it falls back to the
-        // 'web' session guard first (Laravel\Sanctum\Guard::__invoke()),
+        // Security review finding #4: auth:sanctum checks the 'web' session
+        // guard before the bearer token (Laravel\Sanctum\Guard::__invoke()),
         // returning a TransientToken (no delete() method at all, unlike the
-        // real PersonalAccessToken model) if that fallback ever activates.
-        // It's dormant today only because routes/api.php correctly has no
-        // session middleware; catching the resulting \Error (rather than an
+        // real PersonalAccessToken model) when it does. That path is live:
+        // statefulApi() in bootstrap/app.php gives first-party browser
+        // requests the session, so a session caller reaches this with a
+        // TransientToken. This endpoint only revokes tokens, so for them it
+        // is a deliberate no-op — browser sessions log out via the web
+        // POST /logout. Catching the \Error (rather than an
         // instanceof/method_exists() check, which PHPStan flags as
-        // always-true against Sanctum's PHPDoc-only return type) keeps a
-        // future config change from turning that into a hard crash here
-        // instead of a clean no-op.
+        // always-true against Sanctum's PHPDoc-only return type) keeps that
+        // a clean 204 instead of a hard crash.
         try {
             $request->user()->currentAccessToken()->delete();
         } catch (\Error) {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Carbon;
@@ -33,6 +34,25 @@ class UserResource extends JsonResource
             'functional_roles' => RoleResource::collection($this->whenLoaded('functionalRoles')),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
+            'can' => $this->when($request->user() instanceof User, fn () => $this->abilities($request->user())),
+        ];
+    }
+
+    /**
+     * What the requesting actor may do to this user, so a UI can hide
+     * actions that would 403. Hints only — the routes still enforce both
+     * halves themselves. Both halves are needed: UserPolicy never checks
+     * the users.update/users.delete permission (only the route middleware
+     * does), so a policy-only flag would offer a manager Delete buttons
+     * that always fail.
+     *
+     * @return array{update: bool, delete: bool}
+     */
+    private function abilities(User $actor): array
+    {
+        return [
+            'update' => $actor->hasPermission('users.update') && $actor->can('update', $this->resource),
+            'delete' => $actor->hasPermission('users.delete') && $actor->can('delete', $this->resource),
         ];
     }
 }

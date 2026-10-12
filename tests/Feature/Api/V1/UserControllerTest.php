@@ -654,4 +654,121 @@ class UserControllerTest extends TestCase
         $response->assertOk();
         $response->assertHeader('X-RateLimit-Limit', '60');
     }
+
+    // --- `can` flags on UserResource: UI hints for the React user list.
+    // They must combine the route permission with UserPolicy, and they are
+    // never the enforcement — the DELETE/PUT routes still check both.
+
+    /**
+     * @return array<int, array{update: bool, delete: bool}> keyed by user id
+     */
+    private function flagsFromIndex(User $actor): array
+    {
+        $response = $this->actingAs($actor)->getJson('/api/v1/users?per_page=100');
+        $response->assertOk();
+
+        return collect($response->json('data'))->mapWithKeys(fn ($row) => [$row['id'] => $row['can']])->all();
+    }
+
+    public function test_admin_flags_allow_managing_others_but_not_self(): void
+    {
+        $admin = $this->actorWithPermissions('admin', ['users.view', 'users.update', 'users.delete']);
+        $otherAdmin = User::factory()->create(['role_id' => $admin->role_id]);
+        $plain = User::factory()->create(['role_id' => $this->hierarchyRole('user', 10)->id]);
+
+        $flags = $this->flagsFromIndex($admin);
+
+        $this->assertSame(['update' => false, 'delete' => false], $flags[$admin->id]);
+        $this->assertSame(['update' => true, 'delete' => true], $flags[$otherAdmin->id]);
+        $this->assertSame(['update' => true, 'delete' => true], $flags[$plain->id]);
+    }
+
+    public function test_delete_flag_is_false_for_the_last_admin(): void
+    {
+        // An actor that out-ranks admin without being one, so the only
+        // admin in the system is someone it may manage — UserPolicy still
+        // refuses to delete the last admin, and the flag must agree.
+        $owner = $this->actorWithPermissions('owner', ['users.view', 'users.update', 'users.delete'], level: 200);
+        $onlyAdmin = User::factory()->create(['role_id' => $this->hierarchyRole('admin', 100)->id]);
+
+        $this->assertSame(['update' => true, 'delete' => false], $this->flagsFromIndex($owner)[$onlyAdmin->id]);
+    }
+
+    public function test_manager_flags_follow_the_hierarchy_and_lack_delete_without_the_permission(): void
+    {
+        // Seeded managers get users.update but not users.delete. UserPolicy
+        // alone would say a manager may delete a lower-level user; the flag
+        // must not, because the route would 403.
+        $manager = $this->actorWithPermissions('manager', ['users.view', 'users.update']);
+        $peer = User::factory()->create(['role_id' => $manager->role_id]);
+        $plain = User::factory()->create(['role_id' => $this->hierarchyRole('user', 10)->id]);
+
+        $flags = $this->flagsFromIndex($manager);
+
+        $this->assertSame(['update' => true, 'delete' => false], $flags[$plain->id]);
+        $this->assertSame(['update' => false, 'delete' => false], $flags[$peer->id]);
+        $this->assertSame(['update' => false, 'delete' => false], $flags[$manager->id]);
+    }
+
+    public function test_flags_are_hints_only_and_the_routes_still_enforce(): void
+    {
+        $manager = $this->actorWithPermissions('manager', ['users.view', 'users.update']);
+        $plain = User::factory()->create(['role_id' => $this->hierarchyRole('user', 10)->id]);
+
+        $this->actingAs($manager)->deleteJson("/api/v1/users/{$plain->id}")->assertStatus(403);
+        $this->assertModelExists($plain);
+    }
+
+    public function test_flags_are_present_on_single_user_responses_too(): void
+    {
+        $admin = $this->actorWithPermissions('admin', ['users.view', 'users.update', 'users.delete']);
+        $plain = User::factory()->create(['role_id' => $this->hierarchyRole('user', 10)->id]);
+
+        $this->actingAs($admin)->getJson("/api/v1/users/{$plain->id}")
+            ->assertOk()
+            ->assertJsonPath('data.can', ['update' => true, 'delete' => true]);
+    }
+
+    // --- Pagination as the React list consumes it.
+
+    public function test_index_defaults_to_25_per_page_like_the_web_list(): void
+    {
+        $admin = $this->actorWithPermissions('admin', ['users.view']);
+        User::factory()->count(30)->create(['role_id' => $this->hierarchyRole('user', 10)->id]);
+
+        $response = $this->actingAs($admin)->getJson('/api/v1/users');
+
+        $response->assertOk();
+        $response->assertJsonCount(25, 'data');
+        $response->assertJsonPath('meta.per_page', 25);
+        $response->assertJsonPath('meta.last_page', 2);
+    }
+
+    public function test_index_returns_the_requested_page(): void
+    {
+        $admin = $this->actorWithPermissions('admin', ['users.view']);
+        User::factory()->count(30)->create(['role_id' => $this->hierarchyRole('user', 10)->id]);
+
+        $first = $this->actingAs($admin)->getJson('/api/v1/users?page=1')->json('data.*.id');
+        $response = $this->actingAs($admin)->getJson('/api/v1/users?page=2');
+
+        $response->assertOk();
+        $response->assertJsonPath('meta.current_page', 2);
+        $response->assertJsonCount(6, 'data');
+        $this->assertEmpty(array_intersect($first, $response->json('data.*.id')));
+    }
+
+    public function test_pagination_links_keep_the_active_filters(): void
+    {
+        $admin = $this->actorWithPermissions('admin', ['users.view']);
+        User::factory()->count(30)->create(['role_id' => $this->hierarchyRole('user', 10)->id]);
+
+        $response = $this->actingAs($admin)->getJson('/api/v1/users?role=user&per_page=10');
+
+        $response->assertOk();
+        $next = $response->json('links.next');
+        $this->assertStringContainsString('role=user', $next);
+        $this->assertStringContainsString('per_page=10', $next);
+        $this->assertStringContainsString('page=2', $next);
+    }
 }

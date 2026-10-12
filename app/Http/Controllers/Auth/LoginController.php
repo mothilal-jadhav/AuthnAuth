@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Inertia\Inertia;
 
 class LoginController extends Controller
 {
@@ -21,7 +22,7 @@ class LoginController extends Controller
 
     public function showLoginForm()
     {
-        return view('auth.login');
+        return Inertia::render('Auth/Login');
     }
 
     public function login(Request $request)
@@ -42,7 +43,10 @@ class LoginController extends Controller
             Auth::login($user);
             $request->session()->regenerate();
 
-            return redirect('/dashboard');
+            // A full page load, not an Inertia visit: the dashboard is still
+            // a Blade page, which an Inertia XHR can't swap in. For a plain
+            // (non-Inertia) POST this is an ordinary redirect.
+            return Inertia::location('/dashboard');
         }
 
         return back()->withErrors([

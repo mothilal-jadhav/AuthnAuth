@@ -10,26 +10,27 @@ use App\Http\Requests\UpdateUserRequest;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class UserManagementController extends Controller
 {
+    /**
+     * The list itself is fetched client-side from GET /api/v1/users (filters,
+     * pagination and per-row can.update/can.delete come from there), using
+     * the session cookie via Sanctum's stateful API. Only what the API
+     * doesn't expose is passed as props.
+     */
     public function index(Request $request)
     {
-        $users = User::with('role')
-            ->when($request->filled('role'), fn ($query) => $query->whereHas(
-                'role',
-                fn ($q) => $q->where('name', $request->input('role'))
-            ))
-            ->orderBy('name')
-            ->paginate(25)
-            ->withQueryString();
-
         $roleCounts = User::join('roles', 'roles.id', '=', 'users.role_id')
             ->selectRaw('roles.name, count(*) as total')
             ->groupBy('roles.name')
             ->pluck('total', 'name');
 
-        return view('users.index', compact('users', 'roleCounts'));
+        return Inertia::render('Users/Index', [
+            'roleCounts' => $roleCounts,
+            'can' => ['create' => $request->user()->hasPermission('users.create')],
+        ]);
     }
 
     public function create()

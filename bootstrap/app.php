@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsurePasswordIsCurrent;
 use App\Http\Middleware\ForcePasswordChange;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\PermissionMiddleware;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SecurityHeaders;
@@ -28,6 +29,14 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->appendToGroup('web', ForcePasswordChange::class);
         $middleware->appendToGroup('web', SecurityHeaders::class);
+        $middleware->appendToGroup('web', HandleInertiaRequests::class);
+
+        // Lets the React pages call /api/v1/* with the existing session
+        // cookie (Sanctum SPA auth) instead of holding a bearer token in JS.
+        // Only requests whose Referer/Origin matches sanctum.stateful get
+        // session + CSRF middleware; bearer-token clients without such a
+        // header are untouched.
+        $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $shouldRenderJson = fn (Request $request) => $request->is('api/*') || $request->expectsJson();

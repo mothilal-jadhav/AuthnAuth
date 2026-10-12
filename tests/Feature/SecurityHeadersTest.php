@@ -26,6 +26,20 @@ class SecurityHeadersTest extends TestCase
         );
     }
 
+    public function test_csp_allows_vite_scripts_and_styles_only_by_nonce(): void
+    {
+        $response = $this->get('/login');
+
+        $csp = $response->headers->get('Content-Security-Policy');
+
+        $this->assertMatchesRegularExpression("/script-src 'self' 'nonce-[^']+';/", $csp);
+        $this->assertMatchesRegularExpression("/style-src 'self' 'nonce-[^']+';/", $csp);
+        $this->assertStringNotContainsString('unsafe-inline', $csp);
+
+        preg_match("/'nonce-([^']+)'/", $csp, $matches);
+        $response->assertSee('nonce="'.$matches[1].'"', false);
+    }
+
     public function test_hsts_header_absent_on_plain_http_request(): void
     {
         $response = $this->get('/');
