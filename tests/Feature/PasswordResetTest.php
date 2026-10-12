@@ -4,9 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Notifications\PasswordChangedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class PasswordResetTest extends TestCase
@@ -24,7 +27,10 @@ class PasswordResetTest extends TestCase
     {
         $response = $this->get('/forgot-password');
 
-        $response->assertStatus(200);
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Auth/ForgotPassword')
+            ->where('status', null));
     }
 
     public function test_forgot_password_sends_reset_link_for_existing_user(): void
@@ -90,6 +96,54 @@ class PasswordResetTest extends TestCase
         ]);
 
         $this->assertSame(0, $user->tokens()->count());
+    }
+
+    public function test_password_reset_clears_temporary_password_flag_and_notifies_owner(): void
+    {
+        // Same ChangePassword action as the forced and profile changes: an
+        // owner who resets their way out of a temporary password has now
+        // chosen their own, so they must not be forced to change it again.
+        Notification::fake();
+
+        $user = $this->makeUser();
+        $user->forceFill(['must_change_password' => true])->save();
+
+        $this->post('/reset-password', [
+            'token' => Password::createToken($user),
+            'email' => $user->email,
+            'password' => 'NewPassw0rd!',
+            'password_confirmation' => 'NewPassw0rd!',
+        ])->assertRedirect('/login');
+
+        $this->assertFalse($user->fresh()->must_change_password);
+        Notification::assertSentTo($user, PasswordChangedNotification::class);
+    }
+
+    public function test_reset_form_is_react_and_prefills_token_and_email(): void
+    {
+        $this->get('/reset-password/some-token?email=jane%40example.com')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Auth/ResetPassword')
+                ->where('token', 'some-token')
+                ->where('email', 'jane@example.com'));
+    }
+
+    public function test_login_page_shows_the_status_after_a_successful_reset(): void
+    {
+        $user = $this->makeUser();
+
+        $this->post('/reset-password', [
+            'token' => Password::createToken($user),
+            'email' => $user->email,
+            'password' => 'NewPassw0rd!',
+            'password_confirmation' => 'NewPassw0rd!',
+        ])->assertRedirect('/login');
+
+        $this->get('/login')
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Auth/Login')
+                ->where('status', __(Password::PASSWORD_RESET)));
     }
 
     public function test_password_reset_fails_with_invalid_token(): void

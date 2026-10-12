@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\RoleType;
 use App\Http\Requests\Concerns\HasNameEmailRules;
 use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -30,7 +31,7 @@ class StoreUserRequest extends FormRequest
         return [
             'name' => $this->nameRules(),
             'email' => $this->emailRules(),
-            'role_id' => ['required', Rule::exists('roles', 'id')->where('type', 'hierarchy')],
+            'role_id' => ['required', Rule::exists('roles', 'id')->where('type', RoleType::Hierarchy->value)],
         ];
     }
 }

@@ -10,9 +10,9 @@ class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = Role::where('name', 'admin')->first();
-        $manager = Role::where('name', 'manager')->first();
-        $user = Role::where('name', 'user')->first();
+        $admin = Role::where('name', Role::ADMIN)->first();
+        $manager = Role::where('name', Role::MANAGER)->first();
+        $user = Role::where('name', Role::USER)->first();
 
         $admin->permissions()->sync(
             Permission::all()->pluck('id')

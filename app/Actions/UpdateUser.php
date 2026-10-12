@@ -5,7 +5,6 @@ namespace App\Actions;
 use App\Models\User;
 use App\Notifications\EmailChangedNotification;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Notification;
 
 class UpdateUser
 {
@@ -22,10 +21,11 @@ class UpdateUser
      * null means leave functional roles untouched, an array (possibly
      * empty, to clear them) means sync to exactly that set.
      *
+     * @param  User  $actor  who is making the change (named in the email-change notice)
      * @param  array{name: string, email: string, role_id: int}  $data
      * @param  int[]|null  $functionalRoleIds
      */
-    public function execute(User $user, array $data, ?array $functionalRoleIds = null): User
+    public function execute(User $actor, User $user, array $data, ?array $functionalRoleIds = null): User
     {
         $oldEmail = $user->email;
 
@@ -37,8 +37,7 @@ class UpdateUser
         $user->save();
 
         if ($user->wasChanged('email')) {
-            Notification::route('mail', array_unique([$oldEmail, $user->email]))
-                ->notify(new EmailChangedNotification($oldEmail, $user->email, auth()->user()->name));
+            EmailChangedNotification::sendFor($oldEmail, $user, $actor);
         }
 
         if ($functionalRoleIds !== null) {

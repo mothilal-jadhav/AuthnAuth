@@ -9,7 +9,7 @@ new endpoint follows the same conventions as the existing ones.
 
 **Never write a new authorization check for the API.** Every rule about who
 can do what to whom already lives in `app/Policies/UserPolicy.php` (ordinal
-hierarchy) and the `permission:<name>` / `role:<name>` middleware (route
+hierarchy) and the `permission:<name>` middleware (route
 gating), shared verbatim with the web app. An API controller's job is to
 call the same `Gate::authorize()` / `$this->authorize()` / `->can()` the web
 controllers call — never to re-derive "is this actor allowed to do this."
@@ -22,7 +22,7 @@ by both interfaces.
 ```
 routes/api.php                       Route::prefix('v1') group, flat style (no Route::resource)
 app/Http/Controllers/Api/V1/         One controller per resource
-app/Http/Requests/Api/V1/            One FormRequest per mutating/filtering endpoint
+app/Http/Requests/                   FormRequests shared with the web app (Api/V1/ only for API-only ones)
 app/Http/Resources/                  Shared between... nothing else yet — API-only for now
 app/Actions/                         Business logic genuinely shared with the web app
 ```
@@ -34,17 +34,17 @@ guessing at the shape now.
 ## Adding a new endpoint
 
 1. **Route** in `routes/api.php`, inside the existing `auth:sanctum` +
-   `throttle:api` group. Add `permission:<name>` (or `role:<name>`)
+   `throttle:api` group. Add `permission:<name>`
    middleware — every endpoint should be gated by something, even a
    read-only one. Order matters for path parameters: a literal segment
    (e.g. a hypothetical `/users/export`) must be registered before a
    `{wildcard}` route with the same method and segment count, or the
    wildcard swallows it.
-2. **FormRequest** in `app/Http/Requests/Api/V1/`. `authorize()` should call
-   `$this->user()->can(...)` for anything needing the ordinal hierarchy
-   (mirroring the equivalent web FormRequest if one exists — reuse
-   `HasNameEmailRules` and other shared concerns rather than re-deriving
-   rules). Validate `sort`/filter inputs against an explicit whitelist
+2. **FormRequest**: reuse the web one in `app/Http/Requests/` if it exists;
+   otherwise add an API-only one in `app/Http/Requests/Api/V1/`. `authorize()`
+   should call `$this->user()->can(...)` for anything needing the ordinal
+   hierarchy (reuse `HasNameEmailRules` and other shared concerns rather than
+   re-deriving rules). Validate `sort`/filter inputs against an explicit whitelist
    (`Rule::in(...)`) before they can reach a raw `orderBy()`/`where()` —
    see `IndexUserRequest` for the pattern.
 3. **Controller method**: thin. Validate via the FormRequest, authorize via

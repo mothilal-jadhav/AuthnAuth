@@ -27,7 +27,7 @@ A server-rendered authentication and role-based access control (RBAC) system bui
 
 ## Overview
 
-AuthnAuth is primarily a Blade, server-rendered monolith — plain forms and redirects, no SPA framework — with a separate, versioned JSON API (`/api/v1/*`) layered on top of the exact same authorization rules rather than a competing set. It's built around three things:
+AuthnAuth is a Laravel monolith with a React front end served through Inertia (server-side routing and controllers, React pages — no separate SPA or client-side router), with a separate, versioned JSON API (`/api/v1/*`) layered on top of the exact same authorization rules rather than a competing set. It's built around three things:
 
 1. **Authentication** — login, "forgot password" / "reset password", and a forced password-change flow for accounts that were provisioned with a temporary password. (There's no self-service registration — every account is created by an admin/manager, or via `app:create-admin` for the first one — see [Provisioning an Admin Account](#provisioning-an-admin-account).)
 2. **Authorization** — a hand-rolled role/permission system with an ordinal role hierarchy, so higher-privileged roles can manage lower-privileged ones without hardcoding every rule per-controller.
@@ -38,7 +38,7 @@ AuthnAuth is primarily a Blade, server-rendered monolith — plain forms and red
 - Email/password login with session-based auth (no self-service registration — accounts are admin/manager-created)
 - Forgot/reset password flow using Laravel's built-in password broker
 - Forced password change on first login for admin-provisioned accounts
-- Role-based (`role:<name>`) and permission-based (`permission:<name>`) route middleware
+- Permission-based (`permission:<name>`) route middleware
 - An ordinal role hierarchy (`Role::level`) enforced centrally in a single policy — higher-level roles can manage lower-level ones; a role can never manage or delete itself, and the last remaining admin can't be deleted
 - Full user management UI: list/filter by role, create, edit, delete, with role-aware guardrails on who can assign which roles
 - Optional additive "functional" roles that grant extra permissions on top of a user's single hierarchy role, without affecting who manages whom (none are seeded by default)
@@ -53,7 +53,7 @@ AuthnAuth is primarily a Blade, server-rendered monolith — plain forms and red
 |---|---|
 | Language | PHP ^8.3 |
 | Framework | Laravel ^13.17 |
-| Views | Blade (server-rendered, no SPA framework) |
+| Views | React + Inertia (`resources/js/pages/*`) |
 | Frontend build | Vite + Tailwind CSS 4 |
 | Database | MySQL (SQLite supported for local/dev/testing) |
 | Testing | PHPUnit (`RefreshDatabase`), run via `php artisan test` |
@@ -67,7 +67,7 @@ AuthnAuth is primarily a Blade, server-rendered monolith — plain forms and red
 
 Authorization is split across two complementary layers:
 
-- **Route-level gating** (`role:<name>` / `permission:<name>` middleware) — coarse-grained "can this user even reach this route" checks, backed by `User::hasRole()` / `User::hasPermission()`.
+- **Route-level gating** (`permission:<name>` middleware) — coarse-grained "can this user even reach this route" checks, backed by `User::hasPermission()`.
 - **Management authorization** (`app/Policies/UserPolicy.php`) — fine-grained "who can create/edit/delete/assign a role to whom", based on an ordinal `Role::level` column (seeded as `admin = 100`, `manager = 50`, `user = 10`, with gaps left for inserting new tiers later). The rule: `admin` is the one special case that can manage anyone, including other admins; every other role can only manage roles at a strictly lower level; nobody can manage themselves; and the last remaining admin can never be deleted.
 
 This keeps the hierarchy logic in one place instead of duplicated across controllers.
@@ -141,14 +141,15 @@ Tests read database configuration from a local `.env.testing` (copy it from `.en
 
 ```
 app/
-  Actions/                 Business logic shared by the web app and the API (e.g. CreateUser)
+  Actions/                 Business logic shared by the web app, the API and commands (CreateUser, ChangePassword, …)
+  Enums/                   RoleType (hierarchy | functional)
   Console/Commands/       Artisan commands (e.g. app:create-admin)
   Http/Controllers/Auth/  Login, ForgotPassword, ResetPassword, ChangePassword
   Http/Controllers/       User management, profile
   Http/Controllers/Api/V1/ API controllers — reuse the same UserPolicy/middleware, no parallel authz
-  Http/Requests/Api/V1/    API-specific FormRequest validation
+  Http/Requests/           FormRequest validation, shared by web and API (Api/V1/ holds API-only IndexUserRequest)
   Http/Resources/          API response shaping (deliberate field allow-lists)
-  Http/Middleware/        Role/permission route guards, forced-password-change redirect
+  Http/Middleware/        Permission route guard, forced-password-change redirect, security headers
   Models/                 User, Role, Permission
   Policies/                UserPolicy — the role-hierarchy management rules (shared by web + API)
   Providers/               Policy + rate limiter registration
@@ -157,7 +158,8 @@ database/
   migrations/              Users, roles, permissions, and their pivot/foreign-key wiring
   seeders/                 Idempotent Role/Permission/RolePermission seeders
 
-resources/views/           Blade templates (no SPA framework)
+resources/js/pages/        React pages rendered via Inertia (resources/views/app.blade.php is the root view)
+resources/js/components/   Shared React UI components
 routes/web.php             Web application routes
 routes/api.php             Versioned JSON API routes (/api/v1/*)
 config/sanctum.php          API token auth configuration
@@ -179,15 +181,15 @@ tests/                     PHPUnit feature and unit tests (tests/Feature/Api/V1/
 
 ## API
 
-AuthnAuth also exposes a versioned, token-authenticated JSON API alongside the Blade web app — same database, same `UserPolicy`/RBAC rules, zero duplicated authorization logic. It runs on the same app/process as the web app (no separate server to start) — `composer dev`/`php artisan serve` serves both.
+AuthnAuth also exposes a versioned, token-authenticated JSON API alongside the React web app — same database, same `UserPolicy`/RBAC rules, zero duplicated authorization logic. It runs on the same app/process as the web app (no separate server to start) — `composer dev`/`php artisan serve` serves both.
 
 ### Architecture
 
 - **Base path**: `/api/v1/*`, registered in `bootstrap/app.php`, routes defined in `routes/api.php`.
 - **Controllers**: `app/Http/Controllers/Api/V1/` (`AuthController`, `UserController`, `RoleController`, `PermissionController`) — thin, and reuse the exact same `UserPolicy`/`Gate::authorize()`/`permission:<name>` middleware the web controllers use. There is no parallel authorization system for the API.
-- **Validation**: `app/Http/Requests/Api/V1/` — dedicated FormRequest classes, reusing the shared `HasNameEmailRules` trait where the rules are identical to the web forms.
+- **Validation**: the same `app/Http/Requests/` FormRequests the web controllers use (`StoreUserRequest`, `UpdateUserRequest`, `LoginRequest`); only the API-only `IndexUserRequest` lives in `app/Http/Requests/Api/V1/`.
 - **Responses**: `app/Http/Resources/` — every response is a deliberate field allow-list (`UserResource`, `RoleResource`, `PermissionResource`); `password`/`remember_token` are never serialized.
-- **Shared business logic**: `app/Actions/` (`CreateUser`, `UpdateUser`, `DeleteUser`) — used by both the web user-management forms and the API, so each rule lives in exactly one place.
+- **Shared business logic**: `app/Actions/` (`CreateUser`, `UpdateUser`, `DeleteUser`, `AuthenticateCredentials`, …) — used by both the web user-management forms and the API, so each rule lives in exactly one place.
 
 ### Authentication
 

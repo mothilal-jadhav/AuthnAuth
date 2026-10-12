@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Actions\CreateUser;
 use App\Models\Role;
-use App\Models\User;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -15,7 +15,7 @@ use Illuminate\Validation\Rule;
 #[Description('Provision the first admin account for a fresh install')]
 class CreateAdminUser extends Command
 {
-    public function handle(): int
+    public function handle(CreateUser $createUser): int
     {
         if ($this->laravel->environment('production') && ! $this->option('force')) {
             $this->error('Refusing to run in production without --force.');
@@ -35,7 +35,7 @@ class CreateAdminUser extends Command
             return self::FAILURE;
         }
 
-        $adminRole = Role::where('name', 'admin')->first();
+        $adminRole = Role::where('name', Role::ADMIN)->first();
 
         if (! $adminRole) {
             $this->error('No "admin" role found. Run the RoleSeeder first.');
@@ -45,14 +45,11 @@ class CreateAdminUser extends Command
 
         $password = $this->option('password') ?: Str::password(16);
 
-        $user = new User([
+        $createUser->execute([
             'name' => 'Admin',
             'email' => $email,
-            'password' => $password,
-        ]);
-        $user->role_id = $adminRole->id;
-        $user->must_change_password = true;
-        $user->save();
+            'role_id' => $adminRole->id,
+        ], $password);
 
         $this->info("Admin account created: {$email}");
 

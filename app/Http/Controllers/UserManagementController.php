@@ -9,6 +9,7 @@ use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -33,11 +34,16 @@ class UserManagementController extends Controller
         ]);
     }
 
+    /**
+     * After a successful store() this same page shows the new account's
+     * one-time credentials, read from the flash so a reload clears them.
+     */
     public function create()
     {
-        $roles = $this->assignableRoles(forCreate: true);
-
-        return view('users.create', compact('roles'));
+        return Inertia::render('Users/Create', [
+            'roles' => $this->roleOptions($this->assignableRoles(forCreate: true)),
+            'createdUser' => session('created_user'),
+        ]);
     }
 
     public function store(StoreUserRequest $request, CreateUser $createUser)
@@ -54,14 +60,22 @@ class UserManagementController extends Controller
             ]);
     }
 
-    public function edit(User $user)
+    public function edit(Request $request, User $user)
     {
         $this->authorize('update', $user);
 
-        $roles = $this->assignableRoles();
-        $functionalRoles = Role::functional()->orderBy('name')->get();
-
-        return view('users.edit', compact('user', 'roles', 'functionalRoles'));
+        return Inertia::render('Users/Edit', [
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role_id' => $user->role_id,
+                'functional_role_ids' => $user->functionalRoles()->pluck('roles.id'),
+            ],
+            'roles' => $this->roleOptions($this->assignableRoles()),
+            'functionalRoles' => $this->roleOptions(Role::functional()->orderBy('name')->get()),
+            'canAssignFunctionalRoles' => $request->user()->can('assignFunctionalRoles', $user),
+        ]);
     }
 
     public function update(UpdateUserRequest $request, User $user, UpdateUser $updateUser)
@@ -81,7 +95,7 @@ class UserManagementController extends Controller
             $functionalRoleIds = $validated['functional_role_ids'] ?? [];
         }
 
-        $updateUser->execute($user, $validated, $functionalRoleIds);
+        $updateUser->execute($request->user(), $user, $validated, $functionalRoleIds);
 
         return redirect()
             ->route('users.index')
@@ -106,17 +120,30 @@ class UserManagementController extends Controller
      * $forCreate mirrors UserPolicy::create()'s same-level allowance (a
      * manager may create another manager) without extending it to editing
      * an existing user's role, which stays strictly-lower.
+     *
+     * @return Collection<int, Role>
      */
-    private function assignableRoles(bool $forCreate = false)
+    private function assignableRoles(bool $forCreate = false): Collection
     {
         $actorRole = auth()->user()->role;
 
-        if ($actorRole->name === 'admin') {
+        if ($actorRole->isAdmin()) {
             return Role::hierarchy()->orderBy('name')->get();
         }
 
         $operator = $forCreate ? '<=' : '<';
 
         return Role::hierarchy()->where('level', $operator, $actorRole->level)->orderBy('name')->get();
+    }
+
+    /**
+     * Only what a <select>/checkbox needs — never whole Role models as props.
+     *
+     * @param  Collection<int, Role>  $roles
+     * @return list<array{id: int, name: string}>
+     */
+    private function roleOptions(Collection $roles): array
+    {
+        return $roles->map(fn (Role $role) => ['id' => $role->id, 'name' => $role->name])->values()->all();
     }
 }

@@ -1,22 +1,21 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import Alert from '../../components/Alert';
 import AuthShell from '../../components/AuthShell';
 import Button from '../../components/Button';
+import ErrorSummary from '../../components/ErrorSummary';
 import Field from '../../components/Field';
 
-export default function Login() {
+// `status` is the broker's "your password has been reset" message.
+export default function Login({ status }) {
     const form = useForm({
         email: '',
         password: '',
     });
 
-    const errors = Object.values(form.errors);
-
     function submit(e) {
         e.preventDefault();
 
-        // Like the Blade form's onlyInput('email'): keep the email on a
-        // failed attempt, never the password.
+        // Keep the email on a failed attempt, never the password.
         form.post('/login', { onError: () => form.reset('password') });
     }
 
@@ -25,15 +24,13 @@ export default function Login() {
             <Head title="Login" />
 
             <AuthShell title="Good to see you again">
-                {errors.length > 0 && (
-                    <Alert type="error" className="mb-6">
-                        <ul className="list-disc space-y-1 pl-4">
-                            {errors.map((error) => (
-                                <li key={error}>{error}</li>
-                            ))}
-                        </ul>
+                {status && (
+                    <Alert type="success" className="mb-6">
+                        {status}
                     </Alert>
                 )}
+
+                <ErrorSummary errors={form.errors} />
 
                 <form onSubmit={submit} className="flex flex-col gap-5">
                     <Field
@@ -60,10 +57,9 @@ export default function Login() {
                             required
                         />
 
-                        {/* Plain <a>, not Inertia's <Link>: this page is still Blade. */}
-                        <a href="/forgot-password" className="self-end text-sm font-medium text-brand-600 hover:text-brand-700">
+                        <Link href="/forgot-password" className="self-end text-sm font-medium text-brand-600 hover:text-brand-700">
                             Forgot your password?
-                        </a>
+                        </Link>
                     </div>
 
                     <Button size="lg" className="w-full" disabled={form.processing}>

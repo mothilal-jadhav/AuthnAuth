@@ -2,40 +2,21 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Actions\ChangePassword;
 use App\Http\Controllers\Controller;
-use App\Notifications\PasswordChangedNotification;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rules\Password;
+use App\Http\Requests\ChangePasswordRequest;
+use Inertia\Inertia;
 
 class ChangePasswordController extends Controller
 {
     public function showForm()
     {
-        return view('auth.change-password');
+        return Inertia::render('Auth/ChangePassword');
     }
 
-    public function update(Request $request)
+    public function update(ChangePasswordRequest $request, ChangePassword $changePassword)
     {
-        $validated = $request->validate([
-            'password' => [
-                'required',
-                'string',
-                'confirmed',
-                Password::min(8)->mixedCase()->numbers()->symbols(),
-            ],
-        ]);
-
-        $user = $request->user();
-        $user->password = $validated['password'];
-        $user->must_change_password = false;
-        $user->save();
-
-        // Security review finding #1: a password change must revoke any
-        // existing API tokens, otherwise a stolen token stays valid even
-        // after the account owner thinks they've secured their account.
-        $user->tokens()->delete();
-
-        $user->notify(new PasswordChangedNotification);
+        $changePassword->execute($request->user(), $request->validated('password'));
 
         return redirect('/dashboard')->with('success', 'Password updated successfully.');
     }

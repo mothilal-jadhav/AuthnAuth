@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +27,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(User::class, UserPolicy::class);
+
+        // The one password-strength rule; every password-setting form uses
+        // Password::defaults() rather than restating it.
+        Password::defaults(fn () => Password::min(8)->mixedCase()->numbers()->symbols());
 
         // Named limiters, not the bare "throttle:6,1" middleware: that form
         // keys solely on IP+domain (no route in the signature), so every

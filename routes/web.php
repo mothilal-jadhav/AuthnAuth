@@ -4,27 +4,21 @@ use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserManagementController;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', fn () => Inertia::render('Welcome'));
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware('auth')->name('dashboard');
+Route::get('/dashboard', DashboardController::class)
+    ->middleware('auth')
+    ->name('dashboard');
 
-Route::post('/logout', function () {
-    Auth::logout();
-
-    request()->session()->invalidate();
-    request()->session()->regenerateToken();
-
-    return redirect('/');
-})->middleware('auth');
+Route::post('/logout', [LoginController::class, 'logout'])
+    ->middleware('auth')
+    ->name('logout');
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])
     ->name('login');

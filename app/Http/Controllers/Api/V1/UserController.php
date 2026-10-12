@@ -7,8 +7,8 @@ use App\Actions\DeleteUser;
 use App\Actions\UpdateUser;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\IndexUserRequest;
-use App\Http\Requests\Api\V1\StoreUserRequest;
-use App\Http\Requests\Api\V1\UpdateUserRequest;
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Dedoc\Scramble\Attributes\Group;
@@ -106,7 +106,7 @@ class UserController extends Controller
             $functionalRoleIds = $validated['functional_role_ids'];
         }
 
-        $user = $updateUser->execute($user, $validated, $functionalRoleIds);
+        $user = $updateUser->execute($request->user(), $user, $validated, $functionalRoleIds);
 
         return new UserResource($user->fresh(['role', 'functionalRoles']));
     }

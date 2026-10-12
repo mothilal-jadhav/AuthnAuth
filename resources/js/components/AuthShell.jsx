@@ -1,6 +1,6 @@
 import Card from './Card';
 
-export default function AuthShell({ title, children }) {
+export default function AuthShell({ title, footer, children }) {
     return (
         <div className="flex min-h-screen items-center justify-center bg-paper-alt px-4 py-12">
             <div className="w-full max-w-sm">
@@ -10,6 +10,8 @@ export default function AuthShell({ title, children }) {
                 </div>
 
                 <Card>{children}</Card>
+
+                {footer && <p className="mt-6 text-center text-sm text-ink-muted">{footer}</p>}
             </div>
         </div>
     );

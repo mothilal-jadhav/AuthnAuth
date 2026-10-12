@@ -2,18 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\ChangePassword;
+use App\Actions\UpdateProfile;
 use App\Http\Requests\UpdateProfilePasswordRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Requests\VerifyCurrentPasswordRequest;
-use App\Notifications\EmailChangedNotification;
-use App\Notifications\PasswordChangedNotification;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class ProfileController extends Controller
 {
-    public function show()
+    public function show(Request $request)
     {
-        return view('profile');
+        $user = $request->user();
+
+        return Inertia::render('Profile', [
+            'profile' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => ['name' => $user->role->name, 'type' => $user->role->type->value],
+            ],
+        ]);
     }
 
     /**
@@ -28,38 +37,16 @@ class ProfileController extends Controller
         return response()->json(['message' => 'Password verified.']);
     }
 
-    public function update(UpdateProfileRequest $request)
+    public function update(UpdateProfileRequest $request, UpdateProfile $updateProfile)
     {
-        $validated = $request->validated();
-
-        $user = $request->user();
-        $oldEmail = $user->email;
-
-        $user->fill($validated);
-        $user->save();
-
-        if ($user->wasChanged('email')) {
-            Notification::route('mail', array_unique([$oldEmail, $user->email]))
-                ->notify(new EmailChangedNotification($oldEmail, $user->email, $user->name));
-        }
+        $updateProfile->execute($request->user(), $request->validated());
 
         return redirect()->route('profile')->with('success', 'Profile updated successfully.');
     }
 
-    public function updatePassword(UpdateProfilePasswordRequest $request)
+    public function updatePassword(UpdateProfilePasswordRequest $request, ChangePassword $changePassword)
     {
-        $validated = $request->validated();
-
-        $user = $request->user();
-        $user->password = $validated['password'];
-        $user->save();
-
-        // Security review finding #1: a password change must revoke any
-        // existing API tokens, otherwise a stolen token stays valid even
-        // after the account owner thinks they've secured their account.
-        $user->tokens()->delete();
-
-        $user->notify(new PasswordChangedNotification);
+        $changePassword->execute($request->user(), $request->validated('password'));
 
         return redirect()->route('profile')->with('success', 'Password updated successfully.');
     }

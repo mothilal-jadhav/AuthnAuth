@@ -10,14 +10,16 @@ class CreateUser
     /**
      * Create a user with a system-generated temporary password, forcing a
      * password change on first login. Shared by the web and API user-creation
-     * flows so the "how an account gets provisioned" rule lives in one place.
+     * flows and app:create-admin, so the "how an account gets provisioned"
+     * rule lives in one place.
      *
      * @param  array{name: string, email: string, role_id: int}  $data
+     * @param  string|null  $temporaryPassword  generated when omitted
      * @return array{user: User, temporary_password: string}
      */
-    public function execute(array $data): array
+    public function execute(array $data, ?string $temporaryPassword = null): array
     {
-        $temporaryPassword = Str::password(12);
+        $temporaryPassword ??= Str::password(12);
 
         $user = new User([
             'name' => $data['name'],

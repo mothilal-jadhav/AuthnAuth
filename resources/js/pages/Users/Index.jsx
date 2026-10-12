@@ -1,8 +1,9 @@
-import { Head, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Alert from '../../components/Alert';
 import AppLayout from '../../components/AppLayout';
 import Button from '../../components/Button';
+import RoleBadge from '../../components/RoleBadge';
 import { api } from '../../lib/api';
 
 const ROLE_FILTERS = [
@@ -11,11 +12,6 @@ const ROLE_FILTERS = [
     ['manager', 'Managers'],
     ['user', 'Users'],
 ];
-
-const BADGES = {
-    admin: 'bg-danger-bg text-danger border-danger-line',
-    manager: 'bg-warning-bg text-warning border-warning-line',
-};
 
 const STAT_BORDERS = {
     brand: 'border-t-brand-500',
@@ -35,8 +31,7 @@ function Stat({ label, value, color }) {
     );
 }
 
-// Filters live in the query string so reload/back keep them, same as the
-// Blade list's ?role= links.
+// Filters live in the query string so reload/back keep them.
 function readFilters() {
     const params = new URLSearchParams(window.location.search);
 
@@ -136,21 +131,21 @@ export default function Index({ roleCounts, can }) {
             <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
                 <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
                     <div>
-                        <a href="/dashboard" className="text-sm font-medium text-brand-600 hover:text-brand-700">
+                        <Link href="/dashboard" className="text-sm font-medium text-brand-600 hover:text-brand-700">
                             ← Back to Dashboard
-                        </a>
+                        </Link>
                         <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-brand-600">User Management</p>
                         <h1 className="font-display text-2xl font-bold text-ink">Users</h1>
                         <p className="mt-1 text-sm text-ink-muted">Manage users and their access levels.</p>
                     </div>
 
                     {can.create && (
-                        <a
+                        <Link
                             href="/users/create"
                             className="inline-flex items-center rounded-md bg-brand-solid px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-brand-solid-hover"
                         >
                             + Create User
-                        </a>
+                        </Link>
                     )}
                 </div>
 
@@ -225,13 +220,7 @@ export default function Index({ roleCounts, can }) {
                                     <td className="px-4 py-3 text-sm text-ink-muted">{user.email}</td>
 
                                     <td className="px-4 py-3">
-                                        <span
-                                            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${
-                                                BADGES[user.role?.name] ?? 'bg-paper-alt text-ink-muted border-line'
-                                            }`}
-                                        >
-                                            {user.role?.name.toUpperCase()}
-                                        </span>
+                                        {user.role && <RoleBadge role={user.role} />}
                                     </td>
 
                                     <td className="px-4 py-3">
@@ -239,9 +228,9 @@ export default function Index({ roleCounts, can }) {
                                         {user.can.update || user.can.delete ? (
                                             <div className="flex items-center gap-4">
                                                 {user.can.update && (
-                                                    <a href={`/users/${user.id}/edit`} className="text-sm font-medium text-brand-600 hover:text-brand-700">
+                                                    <Link href={`/users/${user.id}/edit`} className="text-sm font-medium text-brand-600 hover:text-brand-700">
                                                         Edit
-                                                    </a>
+                                                    </Link>
                                                 )}
 
                                                 {user.can.delete && (

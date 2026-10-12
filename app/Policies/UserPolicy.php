@@ -19,11 +19,11 @@ class UserPolicy
      */
     public function create(User $actor, int $targetRoleId): bool
     {
-        if ($actor->role->name === 'admin') {
+        if ($actor->role->isAdmin()) {
             return true;
         }
 
-        if ($actor->role->name === 'user') {
+        if ($actor->role->name === Role::USER) {
             return false;
         }
 
@@ -46,7 +46,7 @@ class UserPolicy
      */
     public function assignRole(User $actor, int $roleId): bool
     {
-        if ($actor->role->name === 'admin') {
+        if ($actor->role->isAdmin()) {
             return true;
         }
 
@@ -70,7 +70,7 @@ class UserPolicy
             return false;
         }
 
-        if ($target->role->name === 'admin' && $this->isLastAdmin($target)) {
+        if ($target->role->isAdmin() && $this->isLastAdmin($target)) {
             return false;
         }
 
@@ -101,7 +101,7 @@ class UserPolicy
             return false;
         }
 
-        if ($actor->role->name === 'admin') {
+        if ($actor->role->isAdmin()) {
             return true;
         }
 
@@ -110,6 +110,6 @@ class UserPolicy
 
     private function isLastAdmin(User $target): bool
     {
-        return User::whereHas('role', fn ($query) => $query->where('name', 'admin'))->count() <= 1;
+        return User::whereHas('role', fn ($query) => $query->where('name', Role::ADMIN))->count() <= 1;
     }
 }

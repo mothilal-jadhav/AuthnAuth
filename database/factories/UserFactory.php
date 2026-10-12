@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\RoleType;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -38,9 +39,10 @@ class UserFactory extends Factory
             'remember_token' => Str::random(10),
 
             'role_id' => function () {
-                return Role::firstOrCreate([
-                    'name' => 'user',
-                ])->id;
+                return Role::firstOrCreate(
+                    ['name' => Role::USER],
+                    ['type' => RoleType::Hierarchy, 'level' => 10],
+                )->id;
             },
         ];
     }

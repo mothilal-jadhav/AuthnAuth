@@ -44,8 +44,7 @@ class HandleInertiaRequests extends Middleware
                     'role' => $request->user()->role->name,
                 ] : null,
             ],
-            // Flashed by the still-Blade edit/delete flows, which redirect
-            // back to the (React) user list.
+            // Flashed by the user update/delete redirects back to the list.
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
             ],

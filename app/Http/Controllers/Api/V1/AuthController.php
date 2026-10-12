@@ -2,35 +2,23 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\AuthenticateCredentials;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\V1\LoginRequest;
+use App\Http\Requests\LoginRequest;
 use App\Http\Resources\UserResource;
-use App\Models\User;
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 
 #[Group('Authentication', weight: 1)]
 class AuthController extends Controller
 {
     /**
-     * A precomputed bcrypt hash of a fixed placeholder string (never a real
-     * password). Checked against when no user matches the submitted email,
-     * so Hash::check() always pays its usual cost either way — otherwise a
-     * nonexistent email would short-circuit before ever reaching it, making
-     * "no such email" measurably faster than "wrong password" despite both
-     * returning the same generic message.
-     */
-    private const DUMMY_HASH = '$2y$12$1kF/SCd5h.67y0Re7o4nfexAosZDYWzsCtrimh7.SYQWf2qTu96sC';
-
-    /**
      * Log in
      *
      * Exchanges an email/password pair for a Sanctum bearer token. Send the
      * returned token as `Authorization: Bearer <token>` on every other
-     * request — this endpoint is deliberately not session/cookie based (see
-     * the docblock on the method body for why). No token is issued for an
+     * request — this endpoint never starts a session. No token is issued for an
      * account that still has a system-generated temporary password; it must
      * be changed via the web app first. Rate limited to 6 requests/minute
      * per IP.
@@ -38,21 +26,16 @@ class AuthController extends Controller
     #[Response(401, description: 'Email/password did not match any account.')]
     #[Response(423, description: 'Account still has a temporary password (must_change_password) and cannot use the API yet.')]
     #[Response(429, description: 'Too many login attempts — limited to 6/minute per IP.')]
-    public function login(LoginRequest $request)
+    public function login(LoginRequest $request, AuthenticateCredentials $authenticate)
     {
-        // Deliberately not Auth::attempt()/Auth::login() — routes/api.php
-        // sits in the stateless `api` middleware group (no session
-        // middleware), so this checks credentials directly and issues a
-        // Sanctum token instead of establishing a session. Same generic
-        // error message as the web LoginController, so failed API logins
-        // don't reveal whether an email is registered.
+        // Issues a Sanctum token rather than starting a session. Same
+        // generic error message as the web LoginController, so failed API
+        // logins don't reveal whether an email is registered.
         $credentials = $request->validated();
 
-        $user = User::where('email', $credentials['email'])->first();
+        $user = $authenticate->execute($credentials['email'], $credentials['password']);
 
-        $passwordMatches = Hash::check($credentials['password'], $user->password ?? self::DUMMY_HASH);
-
-        if (! $user || ! $passwordMatches) {
+        if (! $user) {
             return response()->json([
                 'message' => 'The provided credentials do not match our records.',
             ], 401);

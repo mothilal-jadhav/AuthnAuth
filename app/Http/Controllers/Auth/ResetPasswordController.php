@@ -2,38 +2,30 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Actions\ChangePassword;
 use App\Http\Controllers\Controller;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password as PasswordBroker;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Inertia\Inertia;
 
 class ResetPasswordController extends Controller
 {
     public function showResetForm(Request $request, string $token)
     {
-        return view('auth.reset-password', [
+        return Inertia::render('Auth/ResetPassword', [
             'token' => $token,
-            'email' => $request->email,
+            'email' => $request->query('email', ''),
         ]);
     }
 
-    public function reset(Request $request)
+    public function reset(Request $request, ChangePassword $changePassword)
     {
         $request->validate([
             'token' => ['required'],
             'email' => ['required', 'email', 'regex:/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/'],
-            'password' => [
-                'required',
-                'string',
-                'confirmed',
-                Password::min(8)
-                    ->mixedCase()
-                    ->numbers()
-                    ->symbols(),
-            ],
+            'password' => ['required', 'string', 'confirmed', Password::defaults()],
         ]);
 
         $status = PasswordBroker::reset(
@@ -43,17 +35,8 @@ class ResetPasswordController extends Controller
                 'password_confirmation',
                 'token'
             ),
-            function ($user, $password) {
-                $user->forceFill([
-                    'password' => Hash::make($password),
-                    'remember_token' => Str::random(60),
-                ])->save();
-
-                // Security review finding #1: this is the account-recovery
-                // path, most likely to be used specifically because the
-                // account is suspected compromised — any existing API
-                // tokens must not survive it.
-                $user->tokens()->delete();
+            function ($user, $password) use ($changePassword) {
+                $changePassword->execute($user, $password);
 
                 event(new PasswordReset($user));
             }

@@ -9,6 +9,7 @@ use App\Notifications\PasswordChangedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class ProfileTest extends TestCase
@@ -36,8 +37,11 @@ class ProfileTest extends TestCase
         $response = $this->actingAs($user)->get('/profile');
 
         $response->assertOk();
-        $response->assertSee('Jane Doe');
-        $response->assertSee('jane@example.com');
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Profile')
+            ->where('profile.name', 'Jane Doe')
+            ->where('profile.email', 'jane@example.com')
+            ->where('profile.role.name', 'user'));
     }
 
     public function test_user_can_update_their_own_name_and_email(): void

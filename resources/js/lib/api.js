@@ -1,6 +1,7 @@
-// fetch() wrapper for React pages calling /api/v1/* with the session cookie
-// (Sanctum SPA auth — statefulApi() in bootstrap/app.php). No bearer token
-// ever lives in JS. Writes are CSRF-checked: browsers send
+// fetch() wrapper for React pages calling JSON endpoints with the session
+// cookie: api() for /api/v1/* (Sanctum SPA auth — statefulApi() in
+// bootstrap/app.php), request() for same-origin web JSON routes such as
+// /profile/verify-password. No bearer token ever lives in JS. Writes are CSRF-checked: browsers send
 // Sec-Fetch-Site: same-origin themselves, and the X-XSRF-TOKEN header below
 // is the fallback for any that don't.
 
@@ -17,8 +18,12 @@ function xsrfToken() {
     return match ? decodeURIComponent(match[1]) : null;
 }
 
-export async function api(path, { method = 'GET', query, body } = {}) {
-    const url = new URL(`/api/v1${path}`, window.location.origin);
+export function api(path, options) {
+    return request(`/api/v1${path}`, options);
+}
+
+export async function request(path, { method = 'GET', query, body } = {}) {
+    const url = new URL(path, window.location.origin);
 
     Object.entries(query ?? {}).forEach(([key, value]) => {
         if (value !== '' && value !== null && value !== undefined) {

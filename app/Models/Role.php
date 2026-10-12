@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\RoleType;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -9,20 +11,40 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 /**
  * @property int $id
  * @property string $name
- * @property string $type
+ * @property RoleType $type
  * @property int $level
  */
+#[Fillable(['name', 'type', 'level'])]
 class Role extends Model
 {
-    protected $fillable = [
-        'name',
-        'type',
-        'level',
-    ];
+    public const ADMIN = 'admin';
+
+    public const MANAGER = 'manager';
+
+    public const USER = 'user';
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'type' => RoleType::class,
+        ];
+    }
 
     public function permissions(): BelongsToMany
     {
         return $this->belongsToMany(Permission::class);
+    }
+
+    /**
+     * The one role exempt from UserPolicy's ordinal rule — may manage and
+     * assign anyone, including other admins.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->name === self::ADMIN;
     }
 
     /**
@@ -31,7 +53,7 @@ class Role extends Model
      */
     public function scopeHierarchy(Builder $query): Builder
     {
-        return $query->where('type', 'hierarchy');
+        return $query->where('type', RoleType::Hierarchy->value);
     }
 
     /**
@@ -40,25 +62,6 @@ class Role extends Model
      */
     public function scopeFunctional(Builder $query): Builder
     {
-        return $query->where('type', 'functional');
-    }
-
-    /**
-     * The `<x-badge>` variant used to render this role — a severity gradient
-     * for the hierarchy (admin stands out, manager is mid, user is neutral)
-     * and a distinct hue for every functional role, since those are never
-     * assigned as a primary role and don't need severity signaling.
-     */
-    public function badgeVariant(): string
-    {
-        if ($this->type === 'functional') {
-            return 'accent';
-        }
-
-        return match ($this->name) {
-            'admin' => 'danger',
-            'manager' => 'warning',
-            default => 'neutral',
-        };
+        return $query->where('type', RoleType::Functional->value);
     }
 }
